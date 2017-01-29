@@ -20,7 +20,6 @@ struct AnalyzerConfiguration {
         self.classNameToClassMap = classNameToClassMap
         self.uiKitClassNameToClassMap = uiKitClassNameToClassMap
     }
-
 }
 
 protocol Issue: CustomStringConvertible {
