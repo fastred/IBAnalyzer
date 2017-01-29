@@ -1,6 +1,6 @@
 # IBAnalyzer
 
-Find common xib and storyboard-related problems without running your app and writing unit tests.
+Find common xib and storyboard-related problems without running your app or writing unit tests.
 
 ## Usage
 
@@ -16,7 +16,7 @@ MessageCell contains unused @IBOutlet named: unreadIndicatorView
 MessagesViewController contains unused @IBAction named: infoButtonPressed
 ```
 
-You'll be able to avoid crashes caused by exceptions, like:
+You'll be able to avoid crashes caused by exceptions, like the dreadful:
 
 ```
 *** Terminating app due to uncaught exception 'NSUnknownKeyException', reason: '[<Sample.TwitterViewController 0x7fa84630a370> setValue:forUndefinedKey:]: this class is not key value coding-compliant for the key twitterImageView.'
