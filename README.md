@@ -1,6 +1,6 @@
 # IBAnalyzer
 
-Find common xib and storyboard-related problems without running your app and/or writing unit tests.
+Find common xib and storyboard-related problems without running your app and writing unit tests.
 
 ## Usage
 
