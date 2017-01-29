@@ -4,10 +4,10 @@ Find common xib and storyboard-related problems without running your app or writ
 
 ## Usage
 
-Pass a path to your project to `IBAnalyzer` command line tool. Here's an example output you can expect:
+Pass a path to your project to `ibanalyzer` command line tool. Here's an example output you can expect:
 
 ```
-$ ./IBAnalyzer ~/code/Sample/
+$ ./ibanalyzer ~/code/Sample/
 
 TwitterViewController doesn't implement a required @IBAction named: loginButtonPressed:
 TwitterViewController doesn't implement a required @IBOutlet named: twitterImageView
@@ -46,7 +46,7 @@ IBAnalyzer starts by parsing all `.xib,` `.storyboard` and `.swift` files in the
 1. Clone or download the repo.
 2. Open `IBAnalyzer.xcworkspace` in Xcode 8.2 and build the project (⌘-B).
 3. `$ cd Build/MacOS`
-4. `$ ./IBAnalyzer /path/to/your/project`
+4. `$ ./ibanalyzer /path/to/your/project`
 
 ### Binary
 

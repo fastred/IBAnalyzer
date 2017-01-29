@@ -49,7 +49,7 @@
 		A62F86881E12CB800026A788 /* NibParserTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NibParserTests.swift; sourceTree = "<group>"; };
 		A64F479477108183495DDCAB /* Pods_IBAnalyzer.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_IBAnalyzer.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		A66875051E2A813F004978F8 /* DirectoryContentsEnumeratorTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DirectoryContentsEnumeratorTests.swift; sourceTree = "<group>"; };
-		A694A08B1E0F285D008A0A0A /* IBAnalyzer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IBAnalyzer.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A694A08B1E0F285D008A0A0A /* ibanalyzer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ibanalyzer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A694A0941E0F285D008A0A0A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A694A0991E0F285D008A0A0A /* IBAnalyzerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = IBAnalyzerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A694A09F1E0F285D008A0A0A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -143,7 +143,7 @@
 		A6A680971E0F154B007206DE /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A694A08B1E0F285D008A0A0A /* IBAnalyzer.app */,
+				A694A08B1E0F285D008A0A0A /* ibanalyzer.app */,
 				A694A0991E0F285D008A0A0A /* IBAnalyzerTests.xctest */,
 			);
 			name = Products;
@@ -224,7 +224,7 @@
 			);
 			name = IBAnalyzer;
 			productName = IBAnalyzer;
-			productReference = A694A08B1E0F285D008A0A0A /* IBAnalyzer.app */;
+			productReference = A694A08B1E0F285D008A0A0A /* ibanalyzer.app */;
 			productType = "com.apple.product-type.application";
 		};
 		A694A0981E0F285D008A0A0A /* IBAnalyzerTests */ = {
@@ -482,7 +482,7 @@
 				INFOPLIST_FILE = IBAnalyzer/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = pl.holko.IBAnalyzer;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = ibanalyzer;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_VERSION = 3.0;
 			};
@@ -499,7 +499,7 @@
 				INFOPLIST_FILE = IBAnalyzer/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = pl.holko.IBAnalyzer;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = ibanalyzer;
 				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
 				SWIFT_VERSION = 3.0;
 			};
