@@ -17,9 +17,9 @@ enum ConnectionIssue: Issue {
     var description: String {
         switch self {
         case let .MissingOutlet(className: className, outlet: outlet):
-            return "\(className) doesn't have a required IBOutlet named: \(outlet)"
+            return "\(className) doesn't implement a required @IBOutlet named: \(outlet)"
         case let .MissingAction(className: className, action: action):
-            return "\(className) doesn't have a required IBAction named: \(action)"
+            return "\(className) doesn't implement a required @IBAction named: \(action)"
         case let .UnnecessaryOutlet(className: className, outlet: outlet):
             return "\(className) contains unused @IBOutlet named: \(outlet)"
         case let .UnnecessaryAction(className: className, action: action):
