@@ -21,9 +21,16 @@ MessagesViewController contains unused @IBAction named: backingInfoButtonPressed
 
 ## Features
 
-- works with .xib, .storyboard and Swift (only version 3.0 or higher) files
 - finds unimplemented outlets and actions in classes
 - finds `@IBOutlet`s and `@IBAction`s defined in code but not used in xibs and storyboards
+
+New warnings can be implemented by adding a new type conforming to the `Analyzer` protocol and initializing it in `main.swift`. Check [issues](https://github.com/fastred/IBAnalyzer/issues) to learn about some ideas for new warnings.
+
+Works with .xib, .storyboard and Swift (only versions 3.0 or higher) files.
+
+## Drawbacks
+
+This is a fresh tool, used only on a few projects up to now. If you encounter any bugs, please create a new issue.
 
 ## Installation
 
