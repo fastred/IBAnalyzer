@@ -16,11 +16,13 @@ MessageCell contains unused @IBOutlet named: unreadIndicatorView
 MessagesViewController contains unused @IBAction named: infoButtonPressed
 ```
 
-With IBAnalyzer, you'll be able to:
+With IBAnalyzer, you're able to:
 
 1. Find unimplemented outlets & actions in classes. Avoid crashes caused by exceptions, like the dreadful:
     ```
-    *** Terminating app due to uncaught exception 'NSUnknownKeyException', reason: '[<Sample.TwitterViewController 0x7fa84630a370> setValue:forUndefinedKey:]: this class is not key value coding-compliant for the key twitterImageView.'
+    *** Terminating app due to uncaught exception 'NSUnknownKeyException', reason: '
+    [<Sample.TwitterViewController 0x7fa84630a370> setValue:forUndefinedKey:]: this
+     class is not key value coding-compliant for the key twitterImageView.'
     ```
 
 2. Find `@IBOutlet`s and `@IBAction`s defined in code but not connected to from nibs. No more:
