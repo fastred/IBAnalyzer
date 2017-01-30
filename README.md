@@ -44,9 +44,10 @@ IBAnalyzer starts by parsing all `.xib,` `.storyboard` and `.swift` files in the
 ### Manual
 
 1. Clone or download the repo.
-2. Open `IBAnalyzer.xcworkspace` in Xcode 8.2 and build the project (⌘-B).
-3. `$ cd Build/MacOS`
-4. `$ ./ibanalyzer /path/to/your/project`
+1. `$ pod install`
+1. Open `IBAnalyzer.xcworkspace` in Xcode 8.2 and build the project (⌘-B).
+1. `$ cd Build/MacOS`
+1. `$ ./ibanalyzer /path/to/your/project`
 
 ### Binary
 
