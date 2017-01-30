@@ -16,18 +16,20 @@ MessageCell contains unused @IBOutlet named: unreadIndicatorView
 MessagesViewController contains unused @IBAction named: infoButtonPressed
 ```
 
-You'll be able to avoid crashes caused by exceptions, like the dreadful:
+With IBAnalyzer, you'll be able to:
 
-```
-*** Terminating app due to uncaught exception 'NSUnknownKeyException', reason: '[<Sample.TwitterViewController 0x7fa84630a370> setValue:forUndefinedKey:]: this class is not key value coding-compliant for the key twitterImageView.'
-```
+1. Find unimplemented outlets & actions in classes. Avoid crashes caused by exceptions, like the dreadful:
+    ```
+    *** Terminating app due to uncaught exception 'NSUnknownKeyException', reason: '[<Sample.TwitterViewController 0x7fa84630a370> setValue:forUndefinedKey:]: this class is not key value coding-compliant for the key twitterImageView.'
+    ```
 
-## Features
+2. Find `@IBOutlet`s and `@IBAction`s defined in code but not connected to from nibs. No more:
 
-- finds unimplemented outlets and actions in classes
-- finds `@IBOutlet`s and `@IBAction`s defined in code but not used in xibs and storyboards
+    <img src="https://raw.githubusercontent.com/fastred/IBAnalyzer/master/Resources/unnecessary-action.png" width="474" alt="Unnecessary action">
 
-New warnings can be implemented by adding a new type conforming to the `Analyzer` protocol and initializing it in `main.swift`. Check [issues](https://github.com/fastred/IBAnalyzer/issues) to learn about some ideas for new warnings.
+    and
+
+    <img src="https://raw.githubusercontent.com/fastred/IBAnalyzer/master/Resources/unnecessary-outlet.png" width="474" alt="Unnecessary outlet">
 
 ## Drawbacks
 
@@ -38,6 +40,8 @@ This is a new tool, used only on a handful of projects till now. If you encounte
 ## How It Works
 
 IBAnalyzer starts by parsing all `.xib,` `.storyboard` and `.swift` files in the provided folder. It then uses this data (wrapped in `AnalyzerConfiguration`) to generate warnings. You can see the source of an analyzer [checking connections between source code and nibs here](https://github.com/fastred/IBAnalyzer/blob/master/IBAnalyzer/Analyzers/ConnectionAnalyzer.swift).
+
+New warnings can be implemented by adding a new type conforming to the `Analyzer` protocol and initializing it in `main.swift`. Check [issues](https://github.com/fastred/IBAnalyzer/issues) to learn about some ideas for new warnings.
 
 ## Installation
 
