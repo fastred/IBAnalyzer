@@ -25,11 +25,11 @@ With IBAnalyzer, you'll be able to:
 
 2. Find `@IBOutlet`s and `@IBAction`s defined in code but not connected to from nibs. No more:
 
-    <img src="Resources/unnecessary-action.png" width="474" alt="Unnecessary action">
+    <img src="Resources/unnecessary-action@2x.png" width="474" alt="Unnecessary action">
 
     and
 
-    <img src="Resources/unnecessary-outlet.png" width="474" alt="Unnecessary outlet">
+    <img src="Resources/unnecessary-outlet@2x.png" width="474" alt="Unnecessary outlet">
 
 ## Drawbacks
 
