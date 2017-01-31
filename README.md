@@ -63,3 +63,7 @@ New warnings can be implemented by adding a new type conforming to the `Analyzer
 
 - [SourceKitten](https://github.com/jpsim/SourceKitten) – IBAnalyzer wouldn't be possible without it
 - [SwiftGen](https://github.com/AliSoftware/SwiftGen) – inspiration for `NibParser`
+
+## Author
+
+Project initially started by [Arek Holko](http://holko.pl) ([@arekholko](https://twitter.com/arekholko) on Twitter).
