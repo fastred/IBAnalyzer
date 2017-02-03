@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/fastred/IBAnalyzer.svg?branch=master)](https://travis-ci.org/fastred/IBAnalyzer)
+
 # IBAnalyzer
 
 Find common xib and storyboard-related problems without running your app or writing unit tests.
