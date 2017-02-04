@@ -1,0 +1,8 @@
+coverage:
+  ignore:
+    - Pods/*
+  status:
+    patch: false
+    changes: false
+comment: false
+
