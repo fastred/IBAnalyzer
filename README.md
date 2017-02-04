@@ -69,6 +69,7 @@ $ bin/ibanalyzer /path/to/your/project
 
 - [SourceKitten](https://github.com/jpsim/SourceKitten) – IBAnalyzer wouldn't be possible without it
 - [SwiftGen](https://github.com/AliSoftware/SwiftGen) – inspiration for `NibParser`
+- [Sourcery](https://github.com/krzysztofzablocki/Sourcery) – IBAnalyzer uses pretty much the same `Rakefile`
 
 ## Author
 
