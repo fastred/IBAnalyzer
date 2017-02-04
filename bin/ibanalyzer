@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# This file serves just as a link
+# Based on: https://github.com/krzysztofzablocki/Sourcery/blob/master/bin/sourcery
+
+parent_path=$( cd "$(dirname "${BASH_SOURCE}")" ; pwd -P )
+
+"${parent_path}"/IBAnalyzer.app/Contents/MacOS/IBAnalyzer "$@"

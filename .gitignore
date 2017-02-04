@@ -4,6 +4,7 @@
 
 ## Build generated
 build/
+bin/IBAnalyzer.app
 DerivedData/
 
 ## Various settings
@@ -64,3 +65,4 @@ fastlane/Preview.html
 fastlane/screenshots
 fastlane/test_output
 
+.apitoken

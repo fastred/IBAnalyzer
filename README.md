@@ -49,17 +49,21 @@ New warnings can be implemented by adding a new type conforming to the `Analyzer
 
 ## Installation
 
-### Manual
+### Binary
+
+Download the newest prebuilt binary from the [Releases](https://github.com/fastred/IBAnalyzer/releases) tab. Unpack and run using:
+
+```
+$ bin/ibanalyzer /path/to/your/project
+```
+
+### From Source
 
 1. Clone or download the repo.
 1. `$ pod install`
 1. Open `IBAnalyzer.xcworkspace` in Xcode 8.2 and build the project (⌘-B).
 1. `$ cd Build/MacOS`
 1. `$ ./ibanalyzer /path/to/your/project`
-
-### Binary
-
-[Not implemented yet.](https://github.com/fastred/IBAnalyzer/issues/3) Help welcomed!
 
 ## Attributions
 
