@@ -1,0 +1,21 @@
+PODS:
+  - SourceKittenFramework (0.16.0):
+    - SWXMLHash (~> 3.0)
+    - Yams (~> 0.1)
+  - SwiftLint (0.16.0)
+  - SWXMLHash (3.0.3)
+  - Yams (0.1.4)
+
+DEPENDENCIES:
+  - SourceKittenFramework (~> 0.16.0)
+  - SwiftLint (~> 0.16.0)
+
+SPEC CHECKSUMS:
+  SourceKittenFramework: 84afd2293a7278ee99a0a1d7dea29f36c9ef3cda
+  SwiftLint: 90665265ae50b58167c674a11c680bbabe9d6513
+  SWXMLHash: 80d2529d74891bb2f15305a0b9e08f2a4f229ee7
+  Yams: 4a4d2b5f0db216fab03c6abc04b7692ceff7cf5f
+
+PODFILE CHECKSUM: 18620891bf2d6386f04a3125a4e9b431d601c978
+
+COCOAPODS: 1.1.1

@@ -4,5 +4,8 @@ coverage:
   status:
     patch: false
     changes: false
+    project:
+      default:
+        target: 75
 comment: false
 

@@ -1,0 +1,6 @@
+framework module Pods_IBAnalyzer {
+  umbrella header "Pods-IBAnalyzer-umbrella.h"
+
+  export *
+  module * { export * }
+}

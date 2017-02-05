@@ -1,10 +1,8 @@
 language: objective-c
 osx_image: xcode8.2
-before_install:
-  - pod repo update
 script:
   - xcodebuild -scheme IBAnalyzer -workspace IBAnalyzer.xcworkspace
   - xcodebuild test -scheme IBAnalyzer -workspace IBAnalyzer.xcworkspace
 after_success:
-  - bash <(curl -s https://codecov.io/bash)
+  - bash <(curl -s https://codecov.io/bash) -J 'IBAnalyzer'
 

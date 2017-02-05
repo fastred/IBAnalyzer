@@ -366,7 +366,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if which swiftlint >/dev/null; then\ncd IBAnalyzer && ${PODS_ROOT}/SwiftLint/swiftlint && cd ../IBAnalyzerTests && swiftlint && cd ..\nelse\necho \"warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint\"\nfi\n";
+			shellScript = "if which ${PODS_ROOT}/SwiftLint/swiftlint >/dev/null; then\ncd IBAnalyzer && ${PODS_ROOT}/SwiftLint/swiftlint && cd ../IBAnalyzerTests && ${PODS_ROOT}/SwiftLint/swiftlint && cd ..\nelse\necho \"warning: SwiftLint not installed, run 'pod install'\"\nfi\n";
 		};
 		A6EDA62C1E3D4B9C00DBD41F /* Copy Built Product to Local Folder */ = {
 			isa = PBXShellScriptBuildPhase;

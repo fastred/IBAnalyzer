@@ -60,7 +60,6 @@ $ bin/ibanalyzer /path/to/your/project
 ### From Source
 
 1. Clone or download the repo.
-1. `$ pod install`
 1. Open `IBAnalyzer.xcworkspace` in Xcode 8.2 and build the project (⌘-B).
 1. `$ cd Build/MacOS`
 1. `$ ./ibanalyzer /path/to/your/project`
