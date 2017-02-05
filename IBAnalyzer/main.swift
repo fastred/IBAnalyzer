@@ -19,13 +19,16 @@ if !isInUnitTests {
             exit(1)
         }
 
+        let currentDirectoryPath = FileManager.default.currentDirectoryPath
         let path = args[1]
-        let url = URL(fileURLWithPath: args[1], relativeTo: URL(fileURLWithPath: args[0]))
+        let url = URL(fileURLWithPath: args[1], relativeTo: URL(fileURLWithPath: currentDirectoryPath))
 
         guard FileManager.default.fileExists(atPath: url.path) else {
             print("Path \(url.path) doesn't exist.")
             exit(1)
         }
+
+        print("Analyzing files located at: \(url.path)")
 
         let runner = Runner(path: url.path)
         let issues = try runner.issues(using: [ConnectionAnalyzer()])
