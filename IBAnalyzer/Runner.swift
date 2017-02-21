@@ -40,10 +40,7 @@ class Runner {
         }
 
         for url in try swiftFiles() {
-            let mapping = try swiftParser.mappingForFile(at: url)
-            for (key, value) in mapping {
-                classNameToClassMap[key] = value
-            }
+            try swiftParser.mappingForFile(at: url, result: &classNameToClassMap)
         }
 
         let configuration = AnalyzerConfiguration(classNameToNibMap: classNameToNibMap,

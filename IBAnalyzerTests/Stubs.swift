@@ -24,9 +24,13 @@ struct StubThrowingDirectoryContentsEnumerator: DirectoryContentsEnumeratorType 
 }
 
 struct StubNibParser: NibParserType {
-    static let cMap = ["C": Nib(outlets: ["label", "button"], actions: [])]
-    static let dMap = ["FirstViewController": Nib(outlets: [], actions: ["tappedButton:"]),
-                       "SecondViewController": Nib(outlets: ["titleView"], actions: [])]
+    static let button = Declaration(name: "button", line: 1, column: 0)
+    static let label = Declaration(name: "label", line: 1, column: 0)
+    static let cMap = ["C": Nib(outlets: [StubNibParser.label, StubNibParser.button], actions: [])]
+    static let tappedButton = Declaration(name: "tappedButton:", line: 1, column: 0)
+    static let titleView = Declaration(name: "titleView", line: 1, column: 0)
+    static let dMap = ["FirstViewController": Nib(outlets: [], actions: [StubNibParser.tappedButton]),
+                       "SecondViewController": Nib(outlets: [StubNibParser.titleView], actions: [])]
 
     func mappingForFile(at url: URL) throws -> [String : Nib] {
         switch url {
@@ -41,21 +45,29 @@ struct StubNibParser: NibParserType {
 }
 
 struct StubSwiftParser: SwiftParserType {
-    static let aMap = ["C": Class(outlets: ["label"], actions: [], inherited: [])]
-    static let eMap = ["FirstViewController": Class(outlets: [], actions: ["buttonTapped:"], inherited: [])]
+    static let label = Declaration(name: "label", line: 1, column: 0)
+    static let aMap = ["C": Class(outlets: [StubSwiftParser.label], actions: [], inherited: [])]
+    static let buttonTapped = Declaration(name: "buttonTapped:", line: 1, column: 0)
+    static let eMap = ["FirstViewController": Class(outlets: [], actions: [StubSwiftParser.buttonTapped], inherited: [])]
 
-    func mappingForFile(at url: URL) throws -> [String: Class] {
+    func mappingForFile(at url: URL, result: inout [String: Class]) throws {
         switch url {
         case URL(fileURLWithPath: "a.swift"):
-            return type(of: self).aMap
+            result += type(of: self).aMap
         case URL(fileURLWithPath: "e.swift"):
-            return type(of: self).eMap
+            result += type(of: self).eMap
         default:
             fatalError()
         }
     }
 
-    func mappingForContents(_ contents: String) -> [String: Class] {
-        return [:]
+    func mappingForContents(_ contents: String, result: inout [String: Class]) {
+        //do nothing
+    }
+}
+
+func += <K, V> (left: inout [K: V], right: [K: V]) {
+    for (k, v) in right {
+        left.updateValue(v, forKey: k)
     }
 }

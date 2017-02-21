@@ -17,6 +17,7 @@ class NibParser: NibParserType {
         let parser = XMLParser(data: try Data(contentsOf: url))
 
         let delegate = ParserDelegate()
+        delegate.url = url
         parser.delegate = delegate
         parser.parse()
 
@@ -33,6 +34,7 @@ private class ParserDelegate: NSObject, XMLParserDelegate {
         let customClassName: String?
     }
 
+    var url: URL!
     var inObjects = false
     var inConnections = false
     private var stack: [Element] = []
@@ -56,15 +58,16 @@ private class ParserDelegate: NSObject, XMLParserDelegate {
                     break
             }
 
-            classNameToNibMap[customClassName]?.outlets.append(property)
+            let outlet = Declaration(name: property, line: parser.lineNumber, column: parser.columnNumber, url: url)
+            classNameToNibMap[customClassName]?.outlets.append(outlet)
         case "action" where inConnections:
             guard let selector = attributeDict["selector"],
                 let destination = attributeDict["destination"],
                 let customClassName = idToCustomClassMap[destination] else {
                     break
             }
-
-            classNameToNibMap[customClassName]?.actions.append(selector)
+            let action = Declaration(name: selector, line: parser.lineNumber, column: parser.columnNumber, url: url)
+            classNameToNibMap[customClassName]?.actions.append(action)
         case let tag where (inObjects && tag != "viewControllerPlaceholder"):
             let customClass = attributeDict["customClass"]
             let id = attributeDict["id"]

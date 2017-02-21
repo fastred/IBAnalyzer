@@ -9,8 +9,8 @@
 import Foundation
 
 struct Nib {
-    var outlets: [String]
-    var actions: [String]
+    var outlets: [Declaration]
+    var actions: [Declaration]
 }
 
 extension Nib: Equatable {

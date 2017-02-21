@@ -21,17 +21,18 @@ class SwiftParserTests: XCTestCase {
     }
 
     func testViewControllerWithOneOutlet() {
-        let source = "class TestViewController: UIViewController { @IBOutlet weak var button: UIButton!; }"
-
-        let expected = Class(outlets: ["button"], actions: [], inherited: ["UIViewController"])
+        let source = "class TestViewController: UIViewController { @IBOutlet weak var button: UIButton! }"
+        let button = Declaration(name: "button", line: 1, column: 0)
+        let expected = Class(outlets: [button], actions: [], inherited: ["UIViewController"])
         XCTAssertEqual(mappingFor(contents: source), ["TestViewController": expected])
     }
 
     func testNestedViewControllerWithOneOutlet() {
-        let source = "class Outer { class TestViewController: UIViewController { @IBOutlet weak var button: UIButton!; }}"
+        let source = "class Outer { class TestViewController: UIViewController { @IBOutlet weak var button: UIButton! }}"
 
         let expectedOuter = Class(outlets: [], actions: [], inherited: [])
-        let expectedInner = Class(outlets: ["button"], actions: [], inherited: ["UIViewController"])
+        let button = Declaration(name: "button", line: 1, column: 0)
+        let expectedInner = Class(outlets: [button], actions: [], inherited: ["UIViewController"])
         XCTAssertEqual(mappingFor(contents: source), ["Outer": expectedOuter,
                                           "TestViewController": expectedInner])
     }
@@ -39,7 +40,8 @@ class SwiftParserTests: XCTestCase {
     func testViewControllerWithOneAction() {
         let source = "class TestViewController: UIViewController { @IBAction func didTapButton(_ sender: UIButton) {} }"
 
-        let expected = Class(outlets: [], actions: ["didTapButton:"], inherited: ["UIViewController"])
+        let didTapButton = Declaration(name: "didTapButton:", line: 1, column: 0)
+        let expected = Class(outlets: [], actions: [didTapButton], inherited: ["UIViewController"])
         XCTAssertEqual(mappingFor(contents: source), ["TestViewController": expected])
     }
 
@@ -53,12 +55,15 @@ class SwiftParserTests: XCTestCase {
     func testViewControllerWithActionInExtension() {
         let source = "class TestViewController: UIViewController {}; extension TestViewController { @IBAction func didTapButton(_ sender: UIButton) {} }"
 
-        let expected = Class(outlets: [], actions: ["didTapButton:"], inherited: ["UIViewController"])
+        let didTapButton = Declaration(name: "didTapButton:", line: 1, column: 0)
+        let expected = Class(outlets: [], actions: [didTapButton], inherited: ["UIViewController"])
         XCTAssertEqual(mappingFor(contents: source), ["TestViewController": expected])
     }
 
     private func mappingFor(contents: String) -> [String: Class] {
         let parser = SwiftParser()
-        return parser.mappingForContents(contents)
+        var result: [String: Class] = [:]
+        parser.mappingForContents(contents, result: &result)
+        return result
     }
 }

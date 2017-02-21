@@ -7,24 +7,126 @@
 //
 
 import Foundation
+import SourceKittenFramework
+
+struct Declaration {
+    var name: String
+    var line: Int
+    var column: Int
+    var url: URL?
+    var isOptional: Bool
+
+    init(name: String, line: Int, column: Int, url: URL? = nil, isOptional: Bool = false) {
+        self.name = name
+        self.line = line
+        self.column = column
+        self.url = url
+        self.isOptional = isOptional
+    }
+
+    init(name: String, file: File, offset: Int64, isOptional: Bool = false) {
+        let fileOffset = type(of: self).getLineColumnNumber(of: file, offset: Int(offset))
+        var url: URL?
+        if let path = file.path {
+            url = URL(fileURLWithPath: path)
+        }
+        self.init(name: name, line: fileOffset.line, column: fileOffset.column, url: url, isOptional: isOptional)
+    }
+
+    var description: String {
+        return filePath+":\(line):\(column)"
+    }
+
+    var filePath: String {
+        if let path = url?.absoluteString {
+            return path.replacingOccurrences(of: "file://", with: "").replacingOccurrences(of: "%20", with: " ")
+        }
+        return name
+    }
+
+    func fileName(className: String) -> String {
+        if let filename = url?.lastPathComponent {
+            return filename
+        }
+        return className
+    }
+
+    private static func getLineColumnNumber(of file: File, offset: Int) -> (line: Int, column: Int) {
+        let range = file.contents.startIndex..<file.contents.index(file.contents.startIndex, offsetBy: offset)
+        let subString = file.contents.substring(with: range)
+        let lines = subString.components(separatedBy: "\n")
+
+        if let column = lines.last?.characters.count {
+            return (line: lines.count, column: column)
+        }
+        return (line: lines.count, column: 0)
+    }
+}
+
+extension Declaration: Equatable {
+    public static func == (lhs: Declaration, rhs: Declaration) -> Bool {
+        return lhs.name == rhs.name
+    }
+}
 
 enum ConnectionIssue: Issue {
-    case MissingOutlet(className: String, outlet: String)
-    case MissingAction(className: String, action: String)
-    case UnnecessaryOutlet(className: String, outlet: String)
-    case UnnecessaryAction(className: String, action: String)
+    case MissingOutlet(className: String, outlet: Declaration)
+    case MissingAction(className: String, action: Declaration)
+    case UnnecessaryOutlet(className: String, outlet: Declaration)
+    case UnnecessaryAction(className: String, action: Declaration)
 
     var description: String {
         switch self {
         case let .MissingOutlet(className: className, outlet: outlet):
-            return "\(className) doesn't implement a required @IBOutlet named: \(outlet)"
+            return "\(outlet.description): error: IBOutlet missing: \(outlet.name) is not implemented in \(outlet.fileName(className: className))"
         case let .MissingAction(className: className, action: action):
-            return "\(className) doesn't implement a required @IBAction named: \(action)"
+            return "\(action.description): error: IBAction missing: \(action.name) is not implemented in \(action.fileName(className: className))"
         case let .UnnecessaryOutlet(className: className, outlet: outlet):
-            return "\(className) contains unused @IBOutlet named: \(outlet)"
+            if Configuration.shared.isEnabled(.ignoreOptionalProperty) && outlet.isOptional {
+                return ""
+            }
+            let suggestion = outlet.isOptional ?
+                ", remove warning by adding '\(Rule.ignoreOptionalProperty.rawValue)' argument" :
+                ", consider set '\(outlet.name)' Optional"
+            return "\(outlet.description): warning: IBOutlet unused: \(outlet.name) not linked in \(outlet.fileName(className: className))"+suggestion
         case let .UnnecessaryAction(className: className, action: action):
-            return "\(className) contains unused @IBAction named: \(action)"
+            return "\(action.description): warning: IBAction unused: \(action.name) not linked in \(action.fileName(className: className))"
         }
+    }
+
+    var isSeriousViolation: Bool {
+        switch self {
+        case .MissingOutlet, .MissingAction:
+            return true
+        default:
+            return false
+        }
+    }
+}
+
+enum Rule: String {
+    case ignoreOptionalProperty //track optional properties
+}
+
+class Configuration {
+
+    static let shared = Configuration()
+
+    var configuration: [Rule: Bool] =
+        [.ignoreOptionalProperty: false]
+
+    private init() { }
+
+    func setup(with arguments: [String]) {
+        for argument in arguments {
+            if let rule = Rule(rawValue: argument) {
+                self.configuration[rule] = true
+            }
+        }
+    }
+
+    func isEnabled(_ rule: Rule) -> Bool {
+        return configuration[rule] ?? false
     }
 }
 

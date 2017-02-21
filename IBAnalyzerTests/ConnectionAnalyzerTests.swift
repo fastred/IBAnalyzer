@@ -26,43 +26,48 @@ class ConnectionAnalyzerTests: XCTestCase {
     }
 
     func testMissingOutlet() {
-        let nib = Nib(outlets: ["label"], actions: [])
+        let label = Declaration(name: "label", line: 1, column: 0)
+        let nib = Nib(outlets: [label], actions: [])
         let klass = Class(outlets: [], actions: [], inherited: [])
         let configuration = AnalyzerConfiguration(classNameToNibMap: ["A": nib],
                                                   classNameToClassMap: ["A": klass])
-        XCTAssertEqual(issues(for: configuration), [ConnectionIssue.MissingOutlet(className: "A", outlet: "label")])
+        XCTAssertEqual(issues(for: configuration), [ConnectionIssue.MissingOutlet(className: "A", outlet: label)])
     }
 
     func testMissingAction() {
-        let nib = Nib(outlets: [], actions: ["didTapButton:"])
+        let didTapButton = Declaration(name: "didTapButton:", line: 1, column: 0)
+        let nib = Nib(outlets: [], actions: [didTapButton])
         let klass = Class(outlets: [], actions: [], inherited: [])
         let configuration = AnalyzerConfiguration(classNameToNibMap: ["A": nib],
                                                   classNameToClassMap: ["A": klass])
         XCTAssertEqual(issues(for: configuration),
-                       [ConnectionIssue.MissingAction(className: "A", action: "didTapButton:")])
+                       [ConnectionIssue.MissingAction(className: "A", action: didTapButton)])
     }
 
     func testUnnecessaryOutlet() {
         let nib = Nib(outlets: [], actions: [])
-        let klass = Class(outlets: ["label"], actions: [], inherited: [])
+        let label = Declaration(name: "label", line: 1, column: 0)
+        let klass = Class(outlets: [label], actions: [], inherited: [])
         let configuration = AnalyzerConfiguration(classNameToNibMap: ["A": nib],
                                                   classNameToClassMap: ["A": klass])
         XCTAssertEqual(issues(for: configuration),
-                       [ConnectionIssue.UnnecessaryOutlet(className: "A", outlet: "label")])
+                       [ConnectionIssue.UnnecessaryOutlet(className: "A", outlet: label)])
     }
 
     func testUnnecessaryAction() {
         let nib = Nib(outlets: [], actions: [])
-        let klass = Class(outlets: [], actions: ["didTapButton:"], inherited: [])
+        let didTapButton = Declaration(name: "didTapButton:", line: 1, column: 0)
+        let klass = Class(outlets: [], actions: [didTapButton], inherited: [])
         let configuration = AnalyzerConfiguration(classNameToNibMap: ["A": nib],
                                                   classNameToClassMap: ["A": klass])
         XCTAssertEqual(issues(for: configuration),
-                       [ConnectionIssue.UnnecessaryAction(className: "A", action: "didTapButton:")])
+                       [ConnectionIssue.UnnecessaryAction(className: "A", action: didTapButton)])
     }
 
     func testNoIssueWhenOutletInSuperClass() {
-        let nib = Nib(outlets: ["label"], actions: [])
-        let map = ["A": Class(outlets: ["label"], actions: [], inherited: []),
+        let label = Declaration(name: "label", line: 1, column: 0)
+        let nib = Nib(outlets: [label], actions: [])
+        let map = ["A": Class(outlets: [label], actions: [], inherited: []),
                    "B": Class(outlets: [], actions: [], inherited: ["A"])]
         let configuration = AnalyzerConfiguration(classNameToNibMap: ["B": nib],
                                                   classNameToClassMap: map)
@@ -70,8 +75,9 @@ class ConnectionAnalyzerTests: XCTestCase {
     }
 
     func testNoIssueWhenOutletInSuperSuperClass() {
-        let nib = Nib(outlets: ["label"], actions: [])
-        let map = ["A": Class(outlets: ["label"], actions: [], inherited: []),
+        let label = Declaration(name: "label", line: 1, column: 0)
+        let nib = Nib(outlets: [label], actions: [])
+        let map = ["A": Class(outlets: [label], actions: [], inherited: []),
                    "B": Class(outlets: [], actions: [], inherited: ["A"]),
                    "C": Class(outlets: [], actions: [], inherited: ["B"])]
         let configuration = AnalyzerConfiguration(classNameToNibMap: ["C": nib],
@@ -80,8 +86,9 @@ class ConnectionAnalyzerTests: XCTestCase {
     }
 
     func testNoIssueWhenActionInSuperClass() {
-        let nib = Nib(outlets: [], actions: ["didTapButton:"])
-        let map = ["A": Class(outlets: [], actions: ["didTapButton:"], inherited: []),
+        let didTapButton = Declaration(name: "didTapButton:", line: 1, column: 0)
+        let nib = Nib(outlets: [], actions: [didTapButton])
+        let map = ["A": Class(outlets: [], actions: [didTapButton], inherited: []),
                    "B": Class(outlets: [], actions: [], inherited: ["A"]),
                    "C": Class(outlets: [], actions: [], inherited: ["B"])]
         let configuration = AnalyzerConfiguration(classNameToNibMap: ["C": nib],
@@ -90,9 +97,10 @@ class ConnectionAnalyzerTests: XCTestCase {
     }
 
     func testUsesUIKitClasses() {
-        let nib = Nib(outlets: ["delegate"], actions: [])
+        let delegate = Declaration(name: "delegate:", line: 1, column: 0)
+        let nib = Nib(outlets: [delegate], actions: [])
         let klass = Class(outlets: [], actions: [], inherited: ["UITextField"])
-        let textField = Class(outlets: ["delegate"], actions: [], inherited: [])
+        let textField = Class(outlets: [delegate], actions: [], inherited: [])
         let configuration = AnalyzerConfiguration(classNameToNibMap: ["A": nib],
                                                   classNameToClassMap: ["A": klass],
                                                   uiKitClassNameToClassMap: ["UITextField": textField])

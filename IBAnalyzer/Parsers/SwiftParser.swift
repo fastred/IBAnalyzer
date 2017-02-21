@@ -10,8 +10,8 @@ import Foundation
 import SourceKittenFramework
 
 protocol SwiftParserType {
-    func mappingForFile(at url: URL) throws -> [String: Class]
-    func mappingForContents(_ contents: String) -> [String: Class]
+    func mappingForFile(at url: URL, result: inout [String: Class]) throws
+    func mappingForContents(_ contents: String, result: inout [String: Class])
 }
 
 enum SwiftParserError: Error {
@@ -19,32 +19,31 @@ enum SwiftParserError: Error {
 }
 
 class SwiftParser: SwiftParserType {
-    func mappingForFile(at url: URL) throws -> [String: Class] {
+    func mappingForFile(at url: URL, result: inout [String: Class]) throws {
         if let file = File(path: url.path) {
-            return mapping(for: file)
+            return mapping(for: file, result: &result)
         } else {
             throw SwiftParserError.incorrectPath(path: url.path)
         }
     }
 
-    func mappingForContents(_ contents: String) -> [String: Class] {
-        return mapping(for: File(contents: contents))
+    func mappingForContents(_ contents: String, result: inout [String: Class]) {
+        return mapping(for: File(contents: contents), result: &result)
     }
 
-    private func mapping(for file: File) -> [String: Class] {
+    private func mapping(for file: File, result: inout [String: Class]) {
         let fileStructure = Structure(file: file)
         let dictionary = fileStructure.dictionary
 
-        var result: [String: Class] = [:]
-        parseSubstructure(dictionary.substructure, result: &result)
-        return result
+        parseSubstructure(dictionary.substructure, result: &result, file: file)
     }
 
     private func parseSubstructure(_ substructure: [[String : SourceKitRepresentable]],
-                                   result: inout [String: Class]) {
+                                   result: inout [String: Class],
+                                   file: File) {
         for structure in substructure {
-            var outlets: [String] = []
-            var actions: [String] = []
+            var outlets: [Declaration] = []
+            var actions: [Declaration] = []
 
             if let kind = structure["key.kind"] as? String,
                 let name = structure["key.name"] as? String,
@@ -52,31 +51,32 @@ class SwiftParser: SwiftParserType {
 
                 for insideStructure in structure.substructure {
                     if let attributes = insideStructure["key.attributes"] as? [[String: String]],
-                        let name = insideStructure["key.name"] as? String {
+                        let propertyName = insideStructure["key.name"] as? String {
 
                         let isOutlet = attributes.filter({ (dict) -> Bool in
                             return dict.values.contains("source.decl.attribute.iboutlet")
                         }).count > 0
 
-                        if isOutlet {
-                            outlets.append(name)
+                        if isOutlet, let nameOffset64 = insideStructure["key.nameoffset"] as? Int64 {
+                            outlets.append(Declaration(name: propertyName, file: file, offset: nameOffset64, isOptional: insideStructure.isOptional))
                         }
 
                         let isIBAction = attributes.filter({ (dict) -> Bool in
                             return dict.values.contains("source.decl.attribute.ibaction")
                         }).count > 0
 
-                        if isIBAction, let selectorName = insideStructure["key.selector_name"] as? String {
-                            actions.append(selectorName)
+                        if isIBAction, let selectorName = insideStructure["key.selector_name"] as? String,
+                            let nameOffset64 = insideStructure["key.nameoffset"] as? Int64 {
+                            actions.append(Declaration(name: selectorName, file: file, offset: nameOffset64))
                         }
                     }
                 }
 
-                parseSubstructure(structure.substructure, result: &result)
+                parseSubstructure(structure.substructure, result: &result, file: file)
                 let inherited = extractedInheritedTypes(structure: structure)
                 let existing = result[name]
 
-                // appending needed becauase of extensions
+                // appending needed because of extensions
                 result[name] = Class(outlets: outlets + (existing?.outlets ?? []),
                                               actions: actions + (existing?.actions ?? []),
                                               inherited: inherited + (existing?.inherited ?? []))
@@ -98,5 +98,13 @@ private extension Dictionary where Key: ExpressibleByStringLiteral {
     var substructure: [[String: SourceKitRepresentable]] {
         let substructure = self["key.substructure"] as? [SourceKitRepresentable] ?? []
         return substructure.flatMap { $0 as? [String: SourceKitRepresentable] }
+    }
+
+    var isOptional: Bool {
+        if let typename = self["key.typename"] as? String,
+            let optionalString = typename.characters.last {
+            return optionalString == "?"
+        }
+        return false
     }
 }

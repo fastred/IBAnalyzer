@@ -23,6 +23,7 @@ struct AnalyzerConfiguration {
 }
 
 protocol Issue: CustomStringConvertible {
+    var isSeriousViolation: Bool { get }
 }
 
 protocol Analyzer {

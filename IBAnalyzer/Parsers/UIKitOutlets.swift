@@ -34,13 +34,18 @@ private let uiKitOutlets: [String: [String]] = [
     "UINavigationItem": ["backBarButtonItem", "leftBarButtonItem", "rightBarButtonItem", "titleView"],
     "UIToolbar": ["delegate"],
     "UITabBar": ["delegate"],
-    "UISearchBar": ["delegate"]
+    "UISearchBar": ["delegate"],
+    "UIViewController": ["view"]
 ]
 
 func uiKitClassNameToClass() -> [String: Class] {
     var dict: [String: Class] = [:]
     for (name, outlets) in uiKitOutlets {
-        dict[name] = Class(outlets: outlets, actions: [], inherited: [])
+        var outletArray: [Declaration] = []
+        for outlet in outlets {
+            outletArray.append(Declaration(name: outlet, line: 0, column: 0))
+        }
+        dict[name] = Class(outlets: outletArray, actions: [], inherited: [])
     }
 
     return dict
