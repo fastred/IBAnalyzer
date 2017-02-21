@@ -2,6 +2,10 @@
 
 ---
 
+## 0.2.0
+
+- Build phase integration through CocoaPods.
+
 ## 0.1.1
 
 - Fixes relative paths passed to CLI not working correctly.
