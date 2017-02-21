@@ -51,16 +51,14 @@ New warnings can be implemented by adding a new type conforming to the `Analyzer
 
 ### CocoaPods (Build Phase integration)
 
-1. Add `pod 'IBAnalyzer'` to your `Podfile`.
-1. Build Phases > New Run Script Phases
-1. Copy/Paste following to Run Script
-    ```
-    if [ "${CONFIGURATION}" = "Analyze" ]; then
-        $PODS_ROOT/IBAnalyzer/bin/ibanalyzer
-    fi
-    ```
+Note: This can significantly slow-down your build times.
 
-1. Product > Analyze
+1. Add `pod 'IBAnalyzer'` to your `Podfile`.
+1. Go to target settings -> Build Phases > New Run Script Phase (best to name it "IBAnalyzer").
+1. Use this script:
+    ```
+    $PODS_ROOT/IBAnalyzer/bin/ibanalyzer FolderWithSwiftFilesAndNibs/
+    ```
 
 ### Binary
 
