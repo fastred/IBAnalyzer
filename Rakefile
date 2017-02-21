@@ -64,7 +64,7 @@ end
 
 namespace :release do
   desc 'Create a new release on GitHub, CocoaPods and Homebrew'
-  task :new => [:check_versions, :build, :tests, :github]
+  task :new => [:check_versions, :build, :tests, :github, :cocoapods]
 
   def podspec_version(file = 'IBAnalyzer')
     JSON.parse(`bundle exec pod ipc spec #{file}.podspec`)["version"]
