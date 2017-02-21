@@ -58,7 +58,7 @@ Note: This can significantly slow-down your build times.
 1. Use this script:
 
     ```
-    $PODS_ROOT/IBAnalyzer/bin/ibanalyzer FolderWithSwiftFilesAndNibs/
+    $PODS_ROOT/IBAnalyzer/bin/ibanalyzer FolderWithSwiftAndNibFiles/
     ```
 
 ### Binary
