@@ -49,6 +49,19 @@ New warnings can be implemented by adding a new type conforming to the `Analyzer
 
 ## Installation
 
+### CocoaPods (Build Phase integration)
+
+1. Add `pod 'IBAnalyzer'` to your `Podfile`.
+1. Build Phases > New Run Script Phases
+1. Copy/Paste following to Run Script
+    ```
+    if [ "${CONFIGURATION}" = "Analyze" ]; then
+        $PODS_ROOT/IBAnalyzer/bin/ibanalyzer
+    fi
+    ```
+
+1. Product > Analyze
+
 ### Binary
 
 Download the newest prebuilt binary from the [Releases](https://github.com/fastred/IBAnalyzer/releases) tab. Unpack and run using:
@@ -63,20 +76,6 @@ $ bin/ibanalyzer /path/to/your/project
 1. Open `IBAnalyzer.xcworkspace` in Xcode 8.2 and build the project (⌘-B).
 1. `$ cd Build/MacOS`
 1. `$ ./ibanalyzer /path/to/your/project`
-
-### Xcode build phase integration
-
-1. Move binaries ibanalyzer and IBAnalyzer.app to /usr/local/bin/ `cp bin/* /usr/local/bin/`
-1. Build Phases > New Run Script Phases
-1. Copy/Paste following to Run Script ```
-if [ "${CONFIGURATION}" = "Analyze" ]; then
-    if which ibanalyzer >/dev/null; then
-        ibanalyzer
-    else
-        echo "warning: IBAnalyzer not installed, download from https://github.com/fastred/IBAnalyzer"
-    fi
-fi ```
-1. Product > Analyze
 
 ## Attributions
 
