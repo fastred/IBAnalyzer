@@ -2,6 +2,11 @@
 
 ---
 
+## 0.2.1
+
+- Improved README.
+- Replaces errors with warnings.
+
 ## 0.2.0
 
 - Build phase integration through CocoaPods.
