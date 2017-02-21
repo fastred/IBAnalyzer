@@ -56,6 +56,7 @@ Note: This can significantly slow-down your build times.
 1. Add `pod 'IBAnalyzer'` to your `Podfile`.
 1. Go to target settings -> Build Phases > New Run Script Phase (best to name it "IBAnalyzer").
 1. Use this script:
+
     ```
     $PODS_ROOT/IBAnalyzer/bin/ibanalyzer FolderWithSwiftFilesAndNibs/
     ```
