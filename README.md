@@ -54,12 +54,18 @@ New warnings can be implemented by adding a new type conforming to the `Analyzer
 Note: This can significantly slow-down your build times.
 
 1. Add `pod 'IBAnalyzer'` to your `Podfile`.
-1. Run `pod repo update` then `pod install`
-1. Go to target settings -> Build Phases > New Run Script Phase (best to name it "IBAnalyzer").
-1. Use this script:
+1. Run `pod repo update` and then `pod install`.
+1. Go to target settings -> Build Phases and add a `New Run Script Phase`. Change its name to something like `IBAnalyzer`.
+1. Use this script to run analysis on all files in your repository (possibly including 3rd party dependencies, like `Pods/`):
 
     ```
-    $PODS_ROOT/IBAnalyzer/bin/ibanalyzer FolderWithSwiftAndNibFiles/
+    $PODS_ROOT/IBAnalyzer/bin/ibanalyzer ./
+    ```
+    
+    or this one to run analysis only on a single folder:
+    
+    ```
+    $PODS_ROOT/IBAnalyzer/bin/ibanalyzer FolderName/
     ```
 
 ### Binary
