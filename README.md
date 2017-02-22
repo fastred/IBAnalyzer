@@ -54,6 +54,7 @@ New warnings can be implemented by adding a new type conforming to the `Analyzer
 Note: This can significantly slow-down your build times.
 
 1. Add `pod 'IBAnalyzer'` to your `Podfile`.
+1. Run `pod repo update` then `pod install`
 1. Go to target settings -> Build Phases > New Run Script Phase (best to name it "IBAnalyzer").
 1. Use this script:
 
