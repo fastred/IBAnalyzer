@@ -59,13 +59,13 @@ Note: This can significantly slow-down your build times.
 1. Use this script to run analysis on all files in your repository (possibly including 3rd party dependencies, like `Pods/`):
 
     ```
-    $PODS_ROOT/IBAnalyzer/bin/ibanalyzer ./
+    "${PODS_ROOT}/IBAnalyzer/bin/ibanalyzer" ./
     ```
     
     or this one to run analysis only on a single folder:
     
     ```
-    $PODS_ROOT/IBAnalyzer/bin/ibanalyzer FolderName/
+    "${PODS_ROOT}/IBAnalyzer/bin/ibanalyzer" FolderName/
     ```
 
 ### Binary
