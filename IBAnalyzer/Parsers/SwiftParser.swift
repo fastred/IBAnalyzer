@@ -11,7 +11,7 @@ import SourceKittenFramework
 
 protocol SwiftParserType {
     func mappingForFile(at url: URL, result: inout [String: Class]) throws
-    func mappingForContents(_ contents: String, result: inout [String: Class])
+    func mappingForContents(_ contents: String, result: inout [String: Class]) throws
 }
 
 enum SwiftParserError: Error {
@@ -21,24 +21,24 @@ enum SwiftParserError: Error {
 class SwiftParser: SwiftParserType {
     func mappingForFile(at url: URL, result: inout [String: Class]) throws {
         if let file = File(path: url.path) {
-            return mapping(for: file, result: &result)
+            return try mapping(for: file, result: &result)
         } else {
             throw SwiftParserError.incorrectPath(path: url.path)
         }
     }
 
-    func mappingForContents(_ contents: String, result: inout [String: Class]) {
-        return mapping(for: File(contents: contents), result: &result)
+    func mappingForContents(_ contents: String, result: inout [String: Class]) throws {
+        return try mapping(for: File(contents: contents), result: &result)
     }
 
-    private func mapping(for file: File, result: inout [String: Class]) {
-        let fileStructure = Structure(file: file)
+    private func mapping(for file: File, result: inout [String: Class]) throws {
+        let fileStructure = try Structure(file: file)
         let dictionary = fileStructure.dictionary
 
         parseSubstructure(dictionary.substructure, result: &result, file: file)
     }
 
-    private func parseSubstructure(_ substructure: [[String : SourceKitRepresentable]],
+    private func parseSubstructure(_ substructure: [[String: SourceKitRepresentable]],
                                    result: inout [String: Class],
                                    file: File) {
         for structure in substructure {
@@ -84,7 +84,7 @@ class SwiftParser: SwiftParserType {
         }
     }
 
-    private func extractedInheritedTypes(structure: [String : SourceKitRepresentable]) -> [String] {
+    private func extractedInheritedTypes(structure: [String: SourceKitRepresentable]) -> [String] {
         guard let inherited = structure["key.inheritedtypes"] as? [[String: String]] else {
             return []
         }
@@ -102,7 +102,7 @@ private extension Dictionary where Key: ExpressibleByStringLiteral {
 
     var isOptional: Bool {
         if let typename = self["key.typename"] as? String,
-            let optionalString = typename.characters.last {
+            let optionalString = typename.last {
             return optionalString == "?"
         }
         return false

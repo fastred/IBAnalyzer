@@ -20,7 +20,6 @@ if !isInUnitTests {
         }
 
         let currentDirectoryPath = FileManager.default.currentDirectoryPath
-        let path = args[1]
         let url = URL(fileURLWithPath: args[1], relativeTo: URL(fileURLWithPath: currentDirectoryPath))
 
         guard FileManager.default.fileExists(atPath: url.path) else {

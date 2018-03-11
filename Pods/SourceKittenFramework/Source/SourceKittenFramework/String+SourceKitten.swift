@@ -8,6 +8,9 @@
 
 import Foundation
 
+// swiftlint:disable file_length
+// This file could easily be split up
+
 /// Representation of line in String
 public struct Line {
     /// origin = 0
@@ -28,8 +31,6 @@ private let commentLinePrefixCharacterSet: CharacterSet = {
     characterSet.insert(charactersIn: "*")
     return characterSet
 }()
-
-private var keyCacheContainer = 0
 
 extension NSString {
     /**
@@ -159,67 +160,73 @@ extension NSString {
             return line.byteRange.location + byteDiff
         }
 
-        func lineAndCharacter(forCharacterOffset offset: Int) -> (line: Int, character: Int)? {
+        func lineAndCharacter(forCharacterOffset offset: Int, expandingTabsToWidth tabWidth: Int) -> (line: Int, character: Int)? {
+            assert(tabWidth > 0)
+
             let index = lines.index(where: { NSLocationInRange(offset, $0.range) })
             return index.map {
                 let line = lines[$0]
-                return (line: line.index, character: offset - line.range.location + 1)
+
+                let prefixLength = offset - line.range.location
+                let character: Int
+
+                if tabWidth == 1 {
+                    character = prefixLength
+                } else {
+                    character = line.content.prefix(prefixLength).reduce(0) { sum, character in
+                        if character == "\t" {
+                            return sum - (sum % tabWidth) + tabWidth
+                        } else {
+                            return sum + 1
+                        }
+                    }
+                }
+
+                return (line: line.index, character: character + 1)
             }
         }
 
-        func lineAndCharacter(forByteOffset offset: Int) -> (line: Int, character: Int)? {
-            let index = lines.index(where: { NSLocationInRange(offset, $0.byteRange) })
-            return index.map {
-                let line = lines[$0]
-
-                let character: Int
-                let content = line.content
-                let length = offset - line.byteRange.location + 1
-                if length == line.byteRange.length {
-                    character = content.utf16.count
-                } else {
-                    let utf8View = content.utf8
-                    let endIndex = utf8View.index(utf8View.startIndex, offsetBy: length, limitedBy: utf8View.endIndex)!
-                        .samePosition(in: content.utf16)!
-                    character = content.utf16.distance(from: content.utf16.startIndex, to: endIndex)
-                }
-                return (line: line.index, character: character)
-            }
+        func lineAndCharacter(forByteOffset offset: Int, expandingTabsToWidth tabWidth: Int) -> (line: Int, character: Int)? {
+            let characterOffset = location(fromByteOffset: offset)
+            return lineAndCharacter(forCharacterOffset: characterOffset, expandingTabsToWidth: tabWidth)
         }
     }
+
+    static private var stringCache = [NSString: CacheContainer]()
+    static private var stringCacheLock = NSLock()
 
     /**
     CacheContainer instance is stored to instance of NSString as associated object.
     */
     private var cacheContainer: CacheContainer {
-        #if os(Linux)
-        return CacheContainer(self)
-        #else
-        if let cache = objc_getAssociatedObject(self, &keyCacheContainer) as? CacheContainer {
+        NSString.stringCacheLock.lock()
+        defer { NSString.stringCacheLock.unlock() }
+        if let cache = NSString.stringCache[self] {
             return cache
         }
         let cache = CacheContainer(self)
-        objc_setAssociatedObject(self, &keyCacheContainer, cache, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        NSString.stringCache[self] = cache
         return cache
-        #endif
     }
 
     /**
     Returns line number and character for utf16 based offset.
 
     - parameter offset: utf16 based index.
+    - parameter tabWidth: the width in spaces to expand tabs to.
     */
-    public func lineAndCharacter(forCharacterOffset offset: Int) -> (line: Int, character: Int)? {
-        return cacheContainer.lineAndCharacter(forCharacterOffset: offset)
+    public func lineAndCharacter(forCharacterOffset offset: Int, expandingTabsToWidth tabWidth: Int = 1) -> (line: Int, character: Int)? {
+        return cacheContainer.lineAndCharacter(forCharacterOffset: offset, expandingTabsToWidth: tabWidth)
     }
 
     /**
     Returns line number and character for byte offset.
 
     - parameter offset: byte offset.
+    - parameter tabWidth: the width in spaces to expand tabs to.
     */
-    public func lineAndCharacter(forByteOffset offset: Int) -> (line: Int, character: Int)? {
-        return cacheContainer.lineAndCharacter(forByteOffset: offset)
+    public func lineAndCharacter(forByteOffset offset: Int, expandingTabsToWidth tabWidth: Int = 1) -> (line: Int, character: Int)? {
+        return cacheContainer.lineAndCharacter(forByteOffset: offset, expandingTabsToWidth: tabWidth)
     }
 
     /**
@@ -229,15 +236,15 @@ extension NSString {
     - parameter characterSet: Character set to check for membership.
     */
     public func trimmingTrailingCharacters(in characterSet: CharacterSet) -> String {
-        if length == 0 {
+        guard length > 0 else {
             return ""
         }
-        var charBuffer = [unichar](repeating: 0, count: length)
-        getCharacters(&charBuffer, range: NSRange(location: 0, length: charBuffer.count))
-        for newLength in (1...length).reversed() {
-            if !characterSet.contains(UnicodeScalar(charBuffer[newLength - 1])!) {
-                return substring(with: NSRange(location: 0, length: newLength))
+        var unicodeScalars = self.bridge().unicodeScalars
+        while let scalar = unicodeScalars.last {
+            if !characterSet.contains(scalar) {
+                return String(unicodeScalars)
             }
+            unicodeScalars.removeLast()
         }
         return ""
     }
@@ -408,7 +415,7 @@ extension String {
     }
 
     internal func capitalizingFirstLetter() -> String {
-        return String(characters.prefix(1)).capitalized + String(characters.dropFirst())
+        return String(prefix(1)).capitalized + String(dropFirst())
     }
 
 #if !os(Linux)
@@ -425,7 +432,7 @@ extension String {
         let matches = regex.matches(in: self, options: [], range: range)
 
         return matches.flatMap { match in
-            let markRange = match.rangeAt(2)
+            let markRange = match.range(at: 2)
             for excludedRange in excludeRanges {
                 if NSIntersectionRange(excludedRange, markRange).length > 0 {
                     return nil
@@ -442,7 +449,8 @@ extension String {
                 line: UInt32((self as NSString).lineRangeWithByteRange(start: markByteRange.location, length: 0)!.start),
                 column: 1, offset: UInt32(markByteRange.location))
             return SourceDeclaration(type: .mark, location: location, extent: (location, location), name: markString,
-                usr: nil, declaration: nil, documentation: nil, commentBody: nil, children: [], swiftDeclaration: nil, availability: nil)
+                                     usr: nil, declaration: nil, documentation: nil, commentBody: nil, children: [],
+                                     swiftDeclaration: nil, swiftName: nil, availability: nil)
         }
     }
 #endif
@@ -483,7 +491,7 @@ extension String {
         let matches = regex.matches(in: self, options: [], range: range)
 
         return matches.flatMap { match in
-            documentableOffsets.filter({ $0 >= match.range.location }).first
+            documentableOffsets.first { $0 >= match.range.location }
         }
     }
 
@@ -497,6 +505,7 @@ extension String {
         let patterns: [(pattern: String, options: NSRegularExpression.Options)] = [
             ("^\\s*\\/\\*\\*\\s*(.*?)\\*\\/", [.anchorsMatchLines, .dotMatchesLineSeparators]), // multi: ^\s*\/\*\*\s*(.*?)\*\/
             ("^\\s*\\/\\/\\/(.+)?",           .anchorsMatchLines)                               // single: ^\s*\/\/\/(.+)?
+            // swiftlint:disable:previous comma
         ]
         let range = range ?? NSRange(location: 0, length: nsString.length)
         for pattern in patterns {
@@ -508,7 +517,7 @@ extension String {
                     return []
                 }
                 return (1..<numberOfRanges).map { rangeIndex in
-                    let range = match.rangeAt(rangeIndex)
+                    let range = match.range(at: rangeIndex)
                     if range.location == NSNotFound {
                         return "" // empty capture group, return empty string
                     }
@@ -516,7 +525,8 @@ extension String {
                     var lineEnd = nsString.length
                     let indexRange = NSRange(location: range.location, length: 0)
                     nsString.getLineStart(&lineStart, end: &lineEnd, contentsEnd: nil, for: indexRange)
-                    let leadingWhitespaceCountToAdd = nsString.substring(with: NSRange(location: lineStart, length: lineEnd - lineStart)).countOfLeadingCharacters(in: .whitespacesAndNewlines)
+                    let leadingWhitespaceCountToAdd = nsString.substring(with: NSRange(location: lineStart, length: lineEnd - lineStart))
+                                                              .countOfLeadingCharacters(in: .whitespacesAndNewlines)
                     let leadingWhitespaceToAdd = String(repeating: " ", count: leadingWhitespaceCountToAdd)
 
                     let bodySubstring = nsString.substring(with: range)
@@ -526,7 +536,7 @@ extension String {
                     return leadingWhitespaceToAdd + bodySubstring
                 }
             }
-            if bodyParts.count > 0 {
+            if !bodyParts.isEmpty {
                 return bodyParts.joined(separator: "\n").bridge()
                     .trimmingTrailingCharacters(in: .whitespacesAndNewlines)
                     .removingCommonLeadingWhitespaceFromLines()
@@ -545,14 +555,14 @@ extension String {
             let lineLeadingWhitespace = line.countOfLeadingCharacters(in: .whitespacesAndNewlines)
             let lineLeadingCharacters = line.countOfLeadingCharacters(in: commentLinePrefixCharacterSet)
             // Is this prefix smaller than our last and not entirely whitespace?
-            if lineLeadingCharacters < minLeadingCharacters && lineLeadingWhitespace != line.characters.count {
+            if lineLeadingCharacters < minLeadingCharacters && lineLeadingWhitespace != line.count {
                 minLeadingCharacters = lineLeadingCharacters
             }
         }
 
         return lineComponents.map { line in
-            if line.characters.count >= minLeadingCharacters {
-                return line[line.index(line.startIndex, offsetBy: minLeadingCharacters)..<line.endIndex]
+            if line.count >= minLeadingCharacters {
+                return String(line[line.index(line.startIndex, offsetBy: minLeadingCharacters)...])
             }
             return line
         }.joined(separator: "\n")
@@ -581,63 +591,17 @@ extension String {
         unwantedSet.insert(charactersIn: "{")
         return trimmingCharacters(in: unwantedSet)
     }
-}
 
-// MARK: - migration support
-extension NSString {
-    @available(*, unavailable, renamed: "lineAndCharacter(forCharacterOffset:)")
-    public func lineAndCharacterForCharacterOffset(_ offset: Int) -> (line: Int, character: Int)? {
-        fatalError()
-    }
-
-    @available(*, unavailable, renamed: "lineAndCharacter(forByteOffset:)")
-    public func lineAndCharacterForByteOffset(_ offset: Int) -> (line: Int, character: Int)? {
-        fatalError()
-    }
-
-    @available(*, unavailable, renamed: "trimmingTrailingCharacters(in:)")
-    public func stringByTrimmingTrailingCharactersInSet(_ characterSet: CharacterSet) -> String {
-        fatalError()
-    }
-
-    @available(*, unavailable, renamed: "absolutePathRepresentation(rootDirectory:)")
-    public func absolutePathRepresentation(_ rootDirectory: String = FileManager.default.currentDirectoryPath) -> String {
-        fatalError()
-    }
-
-#if !os(Linux)
-    @available(*, unavailable, renamed: "substringWithSourceRange(start:end:)")
-    public func substringWithSourceRange(_ start: SourceLocation, end: SourceLocation) -> String? {
-        fatalError()
-    }
+    /// Returns the byte offset of the section of the string following the last dot ".", or 0 if no dots.
+    internal func byteOffsetOfInnerTypeName() -> Int64 {
+        guard let range = range(of: ".", options: .backwards) else {
+            return 0
+        }
+#if swift(>=4.0)
+        let utf8pos = index(after: range.lowerBound).samePosition(in: utf8)!
+#else
+        let utf8pos = index(after: range.lowerBound).samePosition(in: utf8)
 #endif
-}
-
-extension String {
-#if !os(Linux)
-    @available(*, unavailable, renamed: "pragmaMarks(_:excludeRanges:limit:)")
-    public func pragmaMarks(_ filename: String, excludeRanges: [NSRange], limitRange: NSRange?) -> [SourceDeclaration] {
-        fatalError()
-    }
-#endif
-
-    @available(*, unavailable, renamed: "documentedTokenOffsets(syntaxMap:)")
-    public func documentedTokenOffsets(_ syntaxMap: SyntaxMap) -> [Int] {
-        fatalError()
-    }
-
-    @available(*, unavailable, renamed: "commentBody(range:)")
-    public func commentBody(_ range: NSRange? = nil) -> String? {
-        fatalError()
-    }
-
-    @available(*, unavailable, renamed: "removingCommonLeadingWhitespaceFromLines()")
-    public func stringByRemovingCommonLeadingWhitespaceFromLines() -> String {
-        fatalError()
-    }
-
-    @available(*, unavailable, renamed: "countOfLeadingCharacters(in:)")
-    public func countOfLeadingCharactersInSet(_ characterSet: CharacterSet) -> Int {
-        fatalError()
+        return Int64(utf8.distance(from: utf8.startIndex, to: utf8pos))
     }
 }

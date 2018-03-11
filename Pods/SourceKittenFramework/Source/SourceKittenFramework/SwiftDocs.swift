@@ -29,7 +29,7 @@ public struct SwiftDocs {
         do {
             self.init(
                 file: file,
-                dictionary: try Request.editorOpen(file: file).failableSend(),
+                dictionary: try Request.editorOpen(file: file).send(),
                 cursorInfoRequest: Request.cursorInfoRequest(filePath: file.path, arguments: arguments)
             )
         } catch let error as Request.Error {
@@ -62,7 +62,7 @@ public struct SwiftDocs {
                 syntaxMap: syntaxMap
             )
         }
-        docsDictionary = dictionary
+        docsDictionary = file.addDocComments(dictionary: dictionary, syntaxMap: syntaxMap)
     }
 }
 

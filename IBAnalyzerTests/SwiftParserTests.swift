@@ -63,7 +63,11 @@ class SwiftParserTests: XCTestCase {
     private func mappingFor(contents: String) -> [String: Class] {
         let parser = SwiftParser()
         var result: [String: Class] = [:]
-        parser.mappingForContents(contents, result: &result)
+        do {
+            try parser.mappingForContents(contents, result: &result)
+        } catch let error {
+            XCTFail(error.localizedDescription)
+        }
         return result
     }
 }

@@ -31,7 +31,7 @@ class ConnectionAnalyzerTests: XCTestCase {
         let klass = Class(outlets: [], actions: [], inherited: [])
         let configuration = AnalyzerConfiguration(classNameToNibMap: ["A": nib],
                                                   classNameToClassMap: ["A": klass])
-        XCTAssertEqual(issues(for: configuration), [ConnectionIssue.MissingOutlet(className: "A", outlet: label)])
+        XCTAssertEqual(issues(for: configuration), [ConnectionIssue.missingOutlet(className: "A", outlet: label)])
     }
 
     func testMissingAction() {
@@ -41,7 +41,7 @@ class ConnectionAnalyzerTests: XCTestCase {
         let configuration = AnalyzerConfiguration(classNameToNibMap: ["A": nib],
                                                   classNameToClassMap: ["A": klass])
         XCTAssertEqual(issues(for: configuration),
-                       [ConnectionIssue.MissingAction(className: "A", action: didTapButton)])
+                       [ConnectionIssue.missingAction(className: "A", action: didTapButton)])
     }
 
     func testUnnecessaryOutlet() {
@@ -51,7 +51,7 @@ class ConnectionAnalyzerTests: XCTestCase {
         let configuration = AnalyzerConfiguration(classNameToNibMap: ["A": nib],
                                                   classNameToClassMap: ["A": klass])
         XCTAssertEqual(issues(for: configuration),
-                       [ConnectionIssue.UnnecessaryOutlet(className: "A", outlet: label)])
+                       [ConnectionIssue.unnecessaryOutlet(className: "A", outlet: label)])
     }
 
     func testUnnecessaryAction() {
@@ -61,7 +61,7 @@ class ConnectionAnalyzerTests: XCTestCase {
         let configuration = AnalyzerConfiguration(classNameToNibMap: ["A": nib],
                                                   classNameToClassMap: ["A": klass])
         XCTAssertEqual(issues(for: configuration),
-                       [ConnectionIssue.UnnecessaryAction(className: "A", action: didTapButton)])
+                       [ConnectionIssue.unnecessaryAction(className: "A", action: didTapButton)])
     }
 
     func testNoIssueWhenOutletInSuperClass() {

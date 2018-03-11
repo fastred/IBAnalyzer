@@ -1,21 +1,21 @@
 PODS:
-  - SourceKittenFramework (0.16.0):
-    - SWXMLHash (~> 3.0)
-    - Yams (~> 0.1)
-  - SwiftLint (0.16.0)
-  - SWXMLHash (3.0.3)
-  - Yams (0.1.4)
+  - SourceKittenFramework (0.19.1):
+    - SWXMLHash (~> 4.1)
+    - Yams (~> 0.5.0)
+  - SwiftLint (0.25.0)
+  - SWXMLHash (4.5.0)
+  - Yams (0.5.0)
 
 DEPENDENCIES:
-  - SourceKittenFramework (~> 0.16.0)
-  - SwiftLint (~> 0.16.0)
+  - SourceKittenFramework (~> 0.19)
+  - SwiftLint (~> 0.25)
 
 SPEC CHECKSUMS:
-  SourceKittenFramework: 84afd2293a7278ee99a0a1d7dea29f36c9ef3cda
-  SwiftLint: 90665265ae50b58167c674a11c680bbabe9d6513
-  SWXMLHash: 80d2529d74891bb2f15305a0b9e08f2a4f229ee7
-  Yams: 4a4d2b5f0db216fab03c6abc04b7692ceff7cf5f
+  SourceKittenFramework: ef76be16e76ffa0a64b00c5eb053e87c6770dcdb
+  SwiftLint: e14651157288e9e01d6e1a71db7014fb5744a8ea
+  SWXMLHash: 5d980b1f12ff0ee2bd9a26df1e01377dc91dfb6e
+  Yams: 58b13424ca380835c4c797bc775ce6cbb3bc0167
 
-PODFILE CHECKSUM: dffc81824c5dde7ab079203d53806f5ce93cfcde
+PODFILE CHECKSUM: cf7b7b448cbccb71fcde1d6e415b6373b0de26c2
 
-COCOAPODS: 1.2.0
+COCOAPODS: 1.1.1

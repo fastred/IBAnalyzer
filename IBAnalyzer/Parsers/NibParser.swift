@@ -9,11 +9,11 @@
 import Foundation
 
 protocol NibParserType {
-    func mappingForFile(at url: URL) throws -> [String : Nib]
+    func mappingForFile(at url: URL) throws -> [String: Nib]
 }
 
 class NibParser: NibParserType {
-    func mappingForFile(at url: URL) throws -> [String : Nib] {
+    func mappingForFile(at url: URL) throws -> [String: Nib] {
         let parser = XMLParser(data: try Data(contentsOf: url))
 
         let delegate = ParserDelegate()
@@ -39,7 +39,7 @@ private class ParserDelegate: NSObject, XMLParserDelegate {
     var inConnections = false
     private var stack: [Element] = []
 
-    var classNameToNibMap: [String : Nib] = [:]
+    var classNameToNibMap: [String: Nib] = [:]
     var idToCustomClassMap: [String: String] = [:]
 
     @objc func parser(_ parser: XMLParser, didStartElement elementName: String,

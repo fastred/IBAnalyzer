@@ -36,46 +36,20 @@ public struct Module {
 
     public init?(spmName: String) {
         let yamlPath = ".build/debug.yaml"
-        guard let yaml = try? Yams.Node(string: String(contentsOfFile: yamlPath, encoding: .utf8)),
-            case let .mapping(yamlMapping) = yaml
-            else { fatalError("SPM build manifest does not exist at `.build/debug.yaml` or does not match expected format.") }
-
-        guard let yamlCommands = yamlMapping.filter({ $0.0 == "commands" }).first?.1,
-            case let .mapping(yamlCommandsMapping) = yamlCommands
-            else { fatalError("SPM build manifest does not match expected format.") }
-
-        guard let moduleCommands = yamlCommandsMapping.filter({ $0.0 == "<\(spmName).module>" }).first?.1,
-            case let .mapping(moduleCommand) = moduleCommands
-            else {
-                fputs("Could not find SPM module '\(spmName)'. Here are the modules available:\n", stderr)
-                let availableModules: [String] = yamlCommandsMapping.flatMap { command in
-                    if case let .mapping(commandMapping) = command.1,
-                        let optionalCommandName = commandMapping.filter({ $0.0 == "module-name" }).first?.1,
-                       case let .scalar(commandName) = optionalCommandName {
-                        return commandName
-                    }
-                    return nil
-                }
-                fputs("\(availableModules.map({ "  - " + $0 }).joined(separator: "\n"))\n", stderr)
-                return nil
+        guard let yaml = try? Yams.compose(yaml: String(contentsOfFile: yamlPath, encoding: .utf8)),
+            let commands = yaml?["commands"]?.mapping?.values else {
+            fatalError("SPM build manifest does not exist at `\(yamlPath)` or does not match expected format.")
         }
-
-        func stringArray(_ key: String) -> [String]? {
-            if let seq = moduleCommand.filter({ $0.0 == key }).first?.1,
-                case let .sequence(array) = seq {
-                return array.flatMap { scalar in
-                    if case let .scalar(string) = scalar {
-                        return string
-                    }
-                    return nil
-                }
-            }
+        guard let moduleCommand = commands.first(where: { $0["module-name"]?.string == spmName }) else {
+            fputs("Could not find SPM module '\(spmName)'. Here are the modules available:\n", stderr)
+            let availableModules = commands.flatMap({ $0["module-name"]?.string })
+            fputs("\(availableModules.map({ "  - " + $0 }).joined(separator: "\n"))\n", stderr)
             return nil
         }
-        guard let imports = stringArray("import-paths"),
-              let otherArguments = stringArray("other-args"),
-              let sources = stringArray("sources") else {
-                return nil
+        guard let imports = moduleCommand["import-paths"]?.array(of: String.self),
+              let otherArguments = moduleCommand["other-args"]?.array(of: String.self),
+              let sources = moduleCommand["sources"]?.array(of: String.self) else {
+                fatalError("SPM build manifest does not match expected format.")
         }
         name = spmName
         compilerArguments = {
@@ -99,7 +73,8 @@ public struct Module {
     */
     public init?(xcodeBuildArguments: [String], name: String? = nil, inPath path: String = FileManager.default.currentDirectoryPath) {
         let xcodeBuildOutput = runXcodeBuild(arguments: xcodeBuildArguments, inPath: path) ?? ""
-        guard let arguments = parseCompilerArguments(xcodebuildOutput: xcodeBuildOutput.bridge(), language: .swift, moduleName: name ?? moduleName(fromArguments: xcodeBuildArguments)) else {
+        guard let arguments = parseCompilerArguments(xcodebuildOutput: xcodeBuildOutput.bridge(), language: .swift,
+                                                     moduleName: name ?? moduleName(fromArguments: xcodeBuildArguments)) else {
             fputs("Could not parse compiler arguments from `xcodebuild` output.\n", stderr)
             fputs("Please confirm that `xcodebuild` is building a Swift module.\n", stderr)
             let file = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("xcodebuild-\(NSUUID().uuidString).log")

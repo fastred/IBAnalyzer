@@ -17,7 +17,7 @@ struct DynamicLinkLibrary {
             return unsafeBitCast(sym, to: T.self)
         }
         let errorString = String(validatingUTF8: dlerror())
-        fatalError("Finding symbol \(symbol) failed: \(errorString)")
+        fatalError("Finding symbol \(symbol) failed: \(errorString ?? "unknown error")")
     }
 }
 
@@ -35,7 +35,7 @@ let toolchainLoader = Loader(searchPaths: [
     applicationsDir?.xcodeDeveloperDir.toolchainDir,
     applicationsDir?.xcodeBetaDeveloperDir.toolchainDir,
     userApplicationsDir?.xcodeDeveloperDir.toolchainDir,
-    userApplicationsDir?.xcodeBetaDeveloperDir.toolchainDir,
+    userApplicationsDir?.xcodeBetaDeveloperDir.toolchainDir
 ].flatMap { path in
     if let fullPath = path?.usrLibDir, fullPath.isFile {
         return fullPath
@@ -109,7 +109,11 @@ private let xcrunFindPath: String? = {
     var end = output.startIndex
     var contentsEnd = output.startIndex
     output.getLineStart(&start, end: &end, contentsEnd: &contentsEnd, for: start..<start)
-    let xcrunFindSwiftPath = output.substring(with: start..<contentsEnd)
+#if swift(>=4.0)
+    let xcrunFindSwiftPath = String(output[start..<contentsEnd])
+#else
+    let xcrunFindSwiftPath = output[start..<contentsEnd]
+#endif
     guard xcrunFindSwiftPath.hasSuffix("/usr/bin/swift") else {
         return nil
     }

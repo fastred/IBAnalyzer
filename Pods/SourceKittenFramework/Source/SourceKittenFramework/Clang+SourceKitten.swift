@@ -14,7 +14,22 @@ import Clang_C
 import Foundation
 import SWXMLHash
 
-private var interfaceUUIDMap = [String: String]()
+private var _interfaceUUIDMap = [String: String]()
+private var _interfaceUUIDMapLock = NSLock()
+
+/// Thread safe read from sourceKitUID map
+private func uuidString(`for` sourceKitUID: String) -> String? {
+    _interfaceUUIDMapLock.lock()
+    defer { _interfaceUUIDMapLock.unlock() }
+    return _interfaceUUIDMap[sourceKitUID]
+}
+
+/// Thread safe write from sourceKitUID map
+private func setUUIDString(uidString: String, `for` file: String) {
+    _interfaceUUIDMapLock.lock()
+    defer { _interfaceUUIDMapLock.unlock() }
+    _interfaceUUIDMap[file] = uidString
+}
 
 struct ClangIndex {
     private let index = clang_createIndex(0, 1)
@@ -24,11 +39,11 @@ struct ClangIndex {
     }
 }
 
-struct ClangAvailability {
-    let alwaysDeprecated: Bool
-    let alwaysUnavailable: Bool
-    let deprecationMessage: String?
-    let unavailableMessage: String?
+public struct ClangAvailability {
+    public let alwaysDeprecated: Bool
+    public let alwaysUnavailable: Bool
+    public let deprecationMessage: String?
+    public let unavailableMessage: String?
 }
 
 extension CXString: CustomStringConvertible {
@@ -78,7 +93,11 @@ extension CXCursor {
         guard let rootXML = SWXMLHash.parse(commentXML).children.first else {
             fatalError("couldn't parse XML")
         }
-        return rootXML["Declaration"].element?.text?
+        guard let text = rootXML["Declaration"].element?.text,
+            !text.isEmpty else {
+                return nil
+        }
+        return text
             .replacingOccurrences(of: "\n@end", with: "")
             .replacingOccurrences(of: "@property(", with: "@property (")
     }
@@ -100,9 +119,9 @@ extension CXCursor {
             let regex = try! NSRegularExpression(pattern: "(\\w+)@(\\w+)", options: [])
             let range = NSRange(location: 0, length: usrNSString.length)
             let matches = regex.matches(in: usrNSString as String, options: [], range: range)
-            if matches.count > 0 {
-                let categoryOn = usrNSString.substring(with: matches[0].rangeAt(1))
-                let categoryName = ext ? "" : usrNSString.substring(with: matches[0].rangeAt(2))
+            if !matches.isEmpty {
+                let categoryOn = usrNSString.substring(with: matches[0].range(at: 1))
+                let categoryName = ext ? "" : usrNSString.substring(with: matches[0].range(at: 2))
                 return "\(categoryOn)(\(categoryName))"
             } else {
                 fatalError("Couldn't get category name")
@@ -166,7 +185,7 @@ extension CXCursor {
             "@return ": "- returns: ",
             "@warning ": "- warning: ",
             "@see ": "- see: ",
-            "@note ": "- note: ",
+            "@note ": "- note: "
         ]
         var commentBody = rawComment?.commentBody()
         for (original, replacement) in replacements {
@@ -175,29 +194,39 @@ extension CXCursor {
         return commentBody
     }
 
-    func swiftDeclaration(compilerArguments: [String]) -> String? {
+    func swiftDeclarationAndName(compilerArguments: [String]) -> (swiftDeclaration: String?, swiftName: String?) {
         let file = location().file
         let swiftUUID: String
-        if let uuid = interfaceUUIDMap[file] {
+
+        if let uuid = uuidString(for: file) {
             swiftUUID = uuid
         } else {
             swiftUUID = NSUUID().uuidString
-            interfaceUUIDMap[file] = swiftUUID
+            setUUIDString(uidString: swiftUUID, for: file)
             // Generate Swift interface, associating it with the UUID
-            _ = Request.interface(file: file, uuid: swiftUUID).send()
+            do {
+                _ = try Request.interface(file: file, uuid: swiftUUID, arguments: compilerArguments).send()
+            } catch {
+                return (nil, nil)
+            }
         }
 
         guard let usr = usr(),
-              let usrOffset = Request.findUSR(file: swiftUUID, usr: usr).send()[SwiftDocKey.offset.rawValue] as? Int64 else {
-            return nil
+            let findUSR = try? Request.findUSR(file: swiftUUID, usr: usr).send(),
+            let usrOffset = findUSR[SwiftDocKey.offset.rawValue] as? Int64 else {
+                return (nil, nil)
         }
 
-        let cursorInfo = Request.cursorInfo(file: swiftUUID, offset: usrOffset, arguments: compilerArguments).send()
-        guard let docsXML = cursorInfo[SwiftDocKey.fullXMLDocs.rawValue] as? String,
-              let swiftDeclaration = SWXMLHash.parse(docsXML).children.first?["Declaration"].element?.text else {
-                return nil
+        guard let cursorInfo = try? Request.cursorInfo(file: swiftUUID, offset: usrOffset, arguments: compilerArguments).send() else {
+            return (nil, nil)
         }
-        return swiftDeclaration
+
+        let swiftDeclaration = (cursorInfo[SwiftDocKey.annotatedDeclaration.rawValue] as? String)
+            .flatMap(SWXMLHash.parse)?.element?.recursiveText
+
+        let swiftName = cursorInfo[SwiftDocKey.name.rawValue] as? String
+
+        return (swiftDeclaration, swiftName)
     }
 }
 
@@ -213,7 +242,7 @@ extension CXComment {
 
     func paragraphToString(kindString: String? = nil) -> [Text] {
         if kind() == CXComment_VerbatimLine {
-            return [.Verbatim(clang_VerbatimLineComment_getText(self).str()!)]
+            return [.verbatim(clang_VerbatimLineComment_getText(self).str()!)]
         } else if kind() == CXComment_BlockCommand {
             return (0..<count()).reduce([]) { returnValue, childIndex in
                 return returnValue + self[childIndex].paragraphToString()
@@ -236,7 +265,7 @@ extension CXComment {
             }
             fatalError("not text: \(child.kind())")
         }
-        return [.Para(paragraphString.removingCommonLeadingWhitespaceFromLines(), kindString)]
+        return [.para(paragraphString.removingCommonLeadingWhitespaceFromLines(), kindString)]
     }
 
     func kind() -> CXCommentKind {

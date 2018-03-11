@@ -12,6 +12,9 @@ import Foundation
 import SourceKit
 #endif
 
+// swiftlint:disable file_length
+// This file could easily be split up
+
 public protocol SourceKitRepresentable {
     func isEqualTo(_ rhs: SourceKitRepresentable) -> Bool
 }
@@ -80,14 +83,14 @@ private func fromSourceKit(_ sourcekitObject: sourcekitd_variant_t) -> SourceKit
         }
         return dict
     case SOURCEKITD_VARIANT_TYPE_STRING:
-        return String(bytes: sourcekitd_variant_string_get_ptr(sourcekitObject),
+        return String(bytes: sourcekitd_variant_string_get_ptr(sourcekitObject)!,
                       length: sourcekitd_variant_string_get_length(sourcekitObject))
     case SOURCEKITD_VARIANT_TYPE_INT64:
         return sourcekitd_variant_int64_get_value(sourcekitObject)
     case SOURCEKITD_VARIANT_TYPE_BOOL:
         return sourcekitd_variant_bool_get_value(sourcekitObject)
     case SOURCEKITD_VARIANT_TYPE_UID:
-        return String(sourceKitUID: sourcekitd_variant_uid_get_value(sourcekitObject))
+        return String(sourceKitUID: sourcekitd_variant_uid_get_value(sourcekitObject)!)
     case SOURCEKITD_VARIANT_TYPE_NULL:
         return nil
     default:
@@ -114,9 +117,6 @@ private let initializeSourceKitFailable: Void = {
 /// dispatch_semaphore_t used when waiting for sourcekitd to be restored.
 private var sourceKitWaitingRestoredSemaphore = DispatchSemaphore(value: 0)
 
-/// SourceKit UID to String map.
-private var uidStringMap = [sourcekitd_uid_t: String]()
-
 private extension String {
     /**
     Cache SourceKit requests for strings from UIDs
@@ -124,10 +124,6 @@ private extension String {
     - returns: Cached UID string if available, nil otherwise.
     */
     init?(sourceKitUID: sourcekitd_uid_t) {
-        if let string = uidStringMap[sourceKitUID] {
-            self = string
-            return
-        }
         let length = sourcekitd_uid_get_length(sourceKitUID)
         let bytes = sourcekitd_uid_get_string_ptr(sourceKitUID)
         if let uidString = String(bytes: bytes!, length: length) {
@@ -142,9 +138,8 @@ private extension String {
             For avoiding those penalty, replaces with enum's rawValue String if defined in SourceKitten.
             That does not cause calling `decomposedStringWithCanonicalMapping`.
             */
-            let uidString = String(uidString: uidString)
-            uidStringMap[sourceKitUID] = uidString
-            self = uidString
+
+            self = String(uidString: uidString)
             return
         }
         return nil
@@ -208,7 +203,7 @@ public enum Request {
     /// for which to generate code completion options and array of compiler arguments.
     case codeCompletionRequest(file: String, contents: String, offset: Int64, arguments: [String])
     /// ObjC Swift Interface
-    case interface(file: String, uuid: String)
+    case interface(file: String, uuid: String, arguments: [String])
     /// Find USR
     case findUSR(file: String, usr: String)
     /// Index
@@ -228,104 +223,111 @@ public enum Request {
         case .editorOpen(let file):
             if let path = file.path {
                 dict = [
-                    sourcekitd_uid_get_from_cstr("key.request"): sourcekitd_request_uid_create(sourcekitd_uid_get_from_cstr("source.request.editor.open")),
-                    sourcekitd_uid_get_from_cstr("key.name"): sourcekitd_request_string_create(path),
-                    sourcekitd_uid_get_from_cstr("key.sourcefile"): sourcekitd_request_string_create(path)
+                    sourcekitd_uid_get_from_cstr("key.request")!: sourcekitd_request_uid_create(sourcekitd_uid_get_from_cstr("source.request.editor.open")!),
+                    sourcekitd_uid_get_from_cstr("key.name")!: sourcekitd_request_string_create(path),
+                    sourcekitd_uid_get_from_cstr("key.sourcefile")!: sourcekitd_request_string_create(path)
                 ]
             } else {
                 dict = [
-                    sourcekitd_uid_get_from_cstr("key.request"): sourcekitd_request_uid_create(sourcekitd_uid_get_from_cstr("source.request.editor.open")),
-                    sourcekitd_uid_get_from_cstr("key.name"): sourcekitd_request_string_create(String(file.contents.hash)),
-                    sourcekitd_uid_get_from_cstr("key.sourcetext"): sourcekitd_request_string_create(file.contents)
+                    sourcekitd_uid_get_from_cstr("key.request")!: sourcekitd_request_uid_create(sourcekitd_uid_get_from_cstr("source.request.editor.open")!),
+                    sourcekitd_uid_get_from_cstr("key.name")!: sourcekitd_request_string_create(String(file.contents.hash)),
+                    sourcekitd_uid_get_from_cstr("key.sourcetext")!: sourcekitd_request_string_create(file.contents)
                 ]
             }
         case .cursorInfo(let file, let offset, let arguments):
             var compilerargs = arguments.map({ sourcekitd_request_string_create($0) })
             dict = [
-                sourcekitd_uid_get_from_cstr("key.request"): sourcekitd_request_uid_create(sourcekitd_uid_get_from_cstr("source.request.cursorinfo")),
-                sourcekitd_uid_get_from_cstr("key.name"): sourcekitd_request_string_create(file),
-                sourcekitd_uid_get_from_cstr("key.sourcefile"): sourcekitd_request_string_create(file),
-                sourcekitd_uid_get_from_cstr("key.offset"): sourcekitd_request_int64_create(offset),
-                sourcekitd_uid_get_from_cstr("key.compilerargs"): sourcekitd_request_array_create(&compilerargs, compilerargs.count)
+                sourcekitd_uid_get_from_cstr("key.request")!: sourcekitd_request_uid_create(sourcekitd_uid_get_from_cstr("source.request.cursorinfo")!),
+                sourcekitd_uid_get_from_cstr("key.name")!: sourcekitd_request_string_create(file),
+                sourcekitd_uid_get_from_cstr("key.sourcefile")!: sourcekitd_request_string_create(file),
+                sourcekitd_uid_get_from_cstr("key.offset")!: sourcekitd_request_int64_create(offset),
+                sourcekitd_uid_get_from_cstr("key.compilerargs")!: sourcekitd_request_array_create(&compilerargs, compilerargs.count)
             ]
         case .customRequest(let request):
             return request
         case .yamlRequest(let yaml):
-            return sourcekitd_request_create_from_yaml(yaml, nil)
+            return sourcekitd_request_create_from_yaml(yaml, nil)!
         case .codeCompletionRequest(let file, let contents, let offset, let arguments):
             var compilerargs = arguments.map({ sourcekitd_request_string_create($0) })
             dict = [
-                sourcekitd_uid_get_from_cstr("key.request"): sourcekitd_request_uid_create(sourcekitd_uid_get_from_cstr("source.request.codecomplete")),
-                sourcekitd_uid_get_from_cstr("key.name"): sourcekitd_request_string_create(file),
-                sourcekitd_uid_get_from_cstr("key.sourcefile"): sourcekitd_request_string_create(file),
-                sourcekitd_uid_get_from_cstr("key.sourcetext"): sourcekitd_request_string_create(contents),
-                sourcekitd_uid_get_from_cstr("key.offset"): sourcekitd_request_int64_create(offset),
-                sourcekitd_uid_get_from_cstr("key.compilerargs"): sourcekitd_request_array_create(&compilerargs, compilerargs.count)
+                sourcekitd_uid_get_from_cstr("key.request")!: sourcekitd_request_uid_create(sourcekitd_uid_get_from_cstr("source.request.codecomplete")!),
+                sourcekitd_uid_get_from_cstr("key.name")!: sourcekitd_request_string_create(file),
+                sourcekitd_uid_get_from_cstr("key.sourcefile")!: sourcekitd_request_string_create(file),
+                sourcekitd_uid_get_from_cstr("key.sourcetext")!: sourcekitd_request_string_create(contents),
+                sourcekitd_uid_get_from_cstr("key.offset")!: sourcekitd_request_int64_create(offset),
+                sourcekitd_uid_get_from_cstr("key.compilerargs")!: sourcekitd_request_array_create(&compilerargs, compilerargs.count)
             ]
-        case .interface(let file, let uuid):
-            let arguments = ["-x", "objective-c", file, "-isysroot", sdkPath()]
-            var compilerargs = arguments.map({ sourcekitd_request_string_create($0) })
+        case .interface(let file, let uuid, var arguments):
+            if !arguments.contains("-x") {
+                arguments.append(contentsOf: ["-x", "objective-c"])
+            }
+            if !arguments.contains("-isysroot") {
+                arguments.append(contentsOf: ["-isysroot", sdkPath()])
+            }
+            var compilerargs = ([file] + arguments).map({ sourcekitd_request_string_create($0) })
             dict = [
-                sourcekitd_uid_get_from_cstr("key.request"): sourcekitd_request_uid_create(sourcekitd_uid_get_from_cstr("source.request.editor.open.interface.header")),
-                sourcekitd_uid_get_from_cstr("key.name"): sourcekitd_request_string_create(uuid),
-                sourcekitd_uid_get_from_cstr("key.filepath"): sourcekitd_request_string_create(file),
-                sourcekitd_uid_get_from_cstr("key.compilerargs"): sourcekitd_request_array_create(&compilerargs, compilerargs.count)
+                sourcekitd_uid_get_from_cstr("key.request")!:
+                    sourcekitd_request_uid_create(sourcekitd_uid_get_from_cstr("source.request.editor.open.interface.header")!),
+                sourcekitd_uid_get_from_cstr("key.name")!: sourcekitd_request_string_create(uuid),
+                sourcekitd_uid_get_from_cstr("key.filepath")!: sourcekitd_request_string_create(file),
+                sourcekitd_uid_get_from_cstr("key.compilerargs")!: sourcekitd_request_array_create(&compilerargs, compilerargs.count)
             ]
         case .findUSR(let file, let usr):
             dict = [
-                sourcekitd_uid_get_from_cstr("key.request"): sourcekitd_request_uid_create(sourcekitd_uid_get_from_cstr("source.request.editor.find_usr")),
-                sourcekitd_uid_get_from_cstr("key.usr"): sourcekitd_request_string_create(usr),
-                sourcekitd_uid_get_from_cstr("key.sourcefile"): sourcekitd_request_string_create(file)
+                sourcekitd_uid_get_from_cstr("key.request")!: sourcekitd_request_uid_create(sourcekitd_uid_get_from_cstr("source.request.editor.find_usr")!),
+                sourcekitd_uid_get_from_cstr("key.usr")!: sourcekitd_request_string_create(usr),
+                sourcekitd_uid_get_from_cstr("key.sourcefile")!: sourcekitd_request_string_create(file)
             ]
         case .index(let file, let arguments):
             var compilerargs = arguments.map({ sourcekitd_request_string_create($0) })
             dict = [
-                sourcekitd_uid_get_from_cstr("key.request"): sourcekitd_request_uid_create(sourcekitd_uid_get_from_cstr("source.request.indexsource")),
-                sourcekitd_uid_get_from_cstr("key.sourcefile"): sourcekitd_request_string_create(file),
-                sourcekitd_uid_get_from_cstr("key.compilerargs"): sourcekitd_request_array_create(&compilerargs, compilerargs.count)
+                sourcekitd_uid_get_from_cstr("key.request")!: sourcekitd_request_uid_create(sourcekitd_uid_get_from_cstr("source.request.indexsource")!),
+                sourcekitd_uid_get_from_cstr("key.sourcefile")!: sourcekitd_request_string_create(file),
+                sourcekitd_uid_get_from_cstr("key.compilerargs")!: sourcekitd_request_array_create(&compilerargs, compilerargs.count)
             ]
         case .format(let file, let line, let useTabs, let indentWidth):
             let formatOptions = [
-                sourcekitd_uid_get_from_cstr("key.editor.format.indentwidth"): sourcekitd_request_int64_create(indentWidth),
-                sourcekitd_uid_get_from_cstr("key.editor.format.tabwidth"): sourcekitd_request_int64_create(indentWidth),
-                sourcekitd_uid_get_from_cstr("key.editor.format.usetabs"): sourcekitd_request_int64_create(useTabs ? 1 : 0),
+                sourcekitd_uid_get_from_cstr("key.editor.format.indentwidth")!: sourcekitd_request_int64_create(indentWidth),
+                sourcekitd_uid_get_from_cstr("key.editor.format.tabwidth")!: sourcekitd_request_int64_create(indentWidth),
+                sourcekitd_uid_get_from_cstr("key.editor.format.usetabs")!: sourcekitd_request_int64_create(useTabs ? 1 : 0)
             ]
             var formatOptionsKeys = Array(formatOptions.keys.map({ $0 as sourcekitd_uid_t? }))
             var formatOptionsValues = Array(formatOptions.values)
             dict = [
-                sourcekitd_uid_get_from_cstr("key.request"): sourcekitd_request_uid_create(sourcekitd_uid_get_from_cstr("source.request.editor.formattext")),
-                sourcekitd_uid_get_from_cstr("key.name"): sourcekitd_request_string_create(file),
-                sourcekitd_uid_get_from_cstr("key.line"): sourcekitd_request_int64_create(line),
-                sourcekitd_uid_get_from_cstr("key.editor.format.options"): sourcekitd_request_dictionary_create(&formatOptionsKeys, &formatOptionsValues, formatOptions.count)
+                sourcekitd_uid_get_from_cstr("key.request")!: sourcekitd_request_uid_create(sourcekitd_uid_get_from_cstr("source.request.editor.formattext")!),
+                sourcekitd_uid_get_from_cstr("key.name")!: sourcekitd_request_string_create(file),
+                sourcekitd_uid_get_from_cstr("key.line")!: sourcekitd_request_int64_create(line),
+                sourcekitd_uid_get_from_cstr("key.editor.format.options")!:
+                    sourcekitd_request_dictionary_create(&formatOptionsKeys, &formatOptionsValues, formatOptions.count)
             ]
         case .replaceText(let file, let offset, let length, let sourceText):
             dict = [
-                sourcekitd_uid_get_from_cstr("key.request"): sourcekitd_request_uid_create(sourcekitd_uid_get_from_cstr("source.request.editor.replacetext")),
-                sourcekitd_uid_get_from_cstr("key.name"): sourcekitd_request_string_create(file),
-                sourcekitd_uid_get_from_cstr("key.offset"): sourcekitd_request_int64_create(offset),
-                sourcekitd_uid_get_from_cstr("key.length"): sourcekitd_request_int64_create(length),
-                sourcekitd_uid_get_from_cstr("key.sourcetext"): sourcekitd_request_string_create(sourceText),
+                sourcekitd_uid_get_from_cstr("key.request")!: sourcekitd_request_uid_create(sourcekitd_uid_get_from_cstr("source.request.editor.replacetext")!),
+                sourcekitd_uid_get_from_cstr("key.name")!: sourcekitd_request_string_create(file),
+                sourcekitd_uid_get_from_cstr("key.offset")!: sourcekitd_request_int64_create(offset),
+                sourcekitd_uid_get_from_cstr("key.length")!: sourcekitd_request_int64_create(length),
+                sourcekitd_uid_get_from_cstr("key.sourcetext")!: sourcekitd_request_string_create(sourceText)
             ]
         case .docInfo(let text, let arguments):
             var compilerargs = arguments.map({ sourcekitd_request_string_create($0) })
             dict = [
-                sourcekitd_uid_get_from_cstr("key.request"): sourcekitd_request_uid_create(sourcekitd_uid_get_from_cstr("source.request.docinfo")),
-                sourcekitd_uid_get_from_cstr("key.name"): sourcekitd_request_string_create(NSUUID().uuidString),
-                sourcekitd_uid_get_from_cstr("key.compilerargs"): sourcekitd_request_array_create(&compilerargs, compilerargs.count),
-                sourcekitd_uid_get_from_cstr("key.sourcetext"): sourcekitd_request_string_create(text),
+                sourcekitd_uid_get_from_cstr("key.request")!: sourcekitd_request_uid_create(sourcekitd_uid_get_from_cstr("source.request.docinfo")!),
+                sourcekitd_uid_get_from_cstr("key.name")!: sourcekitd_request_string_create(NSUUID().uuidString),
+                sourcekitd_uid_get_from_cstr("key.compilerargs")!: sourcekitd_request_array_create(&compilerargs, compilerargs.count),
+                sourcekitd_uid_get_from_cstr("key.sourcetext")!: sourcekitd_request_string_create(text)
             ]
         case .moduleInfo(let module, let arguments):
             var compilerargs = arguments.map({ sourcekitd_request_string_create($0) })
             dict = [
-                sourcekitd_uid_get_from_cstr("key.request"): sourcekitd_request_uid_create(sourcekitd_uid_get_from_cstr("source.request.docinfo")),
-                sourcekitd_uid_get_from_cstr("key.name"): sourcekitd_request_string_create(NSUUID().uuidString),
-                sourcekitd_uid_get_from_cstr("key.compilerargs"): sourcekitd_request_array_create(&compilerargs, compilerargs.count),
-                sourcekitd_uid_get_from_cstr("key.modulename"): sourcekitd_request_string_create(module),
+                sourcekitd_uid_get_from_cstr("key.request")!: sourcekitd_request_uid_create(sourcekitd_uid_get_from_cstr("source.request.docinfo")!),
+                sourcekitd_uid_get_from_cstr("key.name")!: sourcekitd_request_string_create(NSUUID().uuidString),
+                sourcekitd_uid_get_from_cstr("key.compilerargs")!: sourcekitd_request_array_create(&compilerargs, compilerargs.count),
+                sourcekitd_uid_get_from_cstr("key.modulename")!: sourcekitd_request_string_create(module)
             ]
         }
         var keys = Array(dict.keys.map({ $0 as sourcekitd_uid_t? }))
         var values = Array(dict.values)
-        return sourcekitd_request_dictionary_create(&keys, &values, dict.count)
+        return sourcekitd_request_dictionary_create(&keys, &values, dict.count)!
     }
 
     /**
@@ -355,19 +357,27 @@ public enum Request {
         if offset == 0 {
             return nil
         }
-        sourcekitd_request_dictionary_set_int64(cursorInfoRequest, sourcekitd_uid_get_from_cstr(SwiftDocKey.offset.rawValue), offset)
-        return try? Request.customRequest(request: cursorInfoRequest).failableSend()
+        sourcekitd_request_dictionary_set_int64(cursorInfoRequest, sourcekitd_uid_get_from_cstr(SwiftDocKey.offset.rawValue)!, offset)
+        return try? Request.customRequest(request: cursorInfoRequest).send()
     }
 
     /**
     Sends the request to SourceKit and return the response as an [String: SourceKitRepresentable].
 
     - returns: SourceKit output as a dictionary.
+    - throws: Request.Error on fail ()
     */
-    public func send() -> [String: SourceKitRepresentable] {
-        initializeSourceKit
+    public func send() throws -> [String: SourceKitRepresentable] {
+        initializeSourceKitFailable
         let response = sourcekitd_send_request_sync(sourcekitObject)
         defer { sourcekitd_response_dispose(response!) }
+        if sourcekitd_response_is_error(response!) {
+            let error = Request.Error(response: response!)
+            if case .connectionInterrupted = error {
+                _ = sourceKitWaitingRestoredSemaphore.wait(timeout: DispatchTime.now() + 10)
+            }
+            throw error
+        }
         return fromSourceKit(sourcekitd_response_get_value(response!)) as! [String: SourceKitRepresentable]
     }
 
@@ -412,18 +422,9 @@ public enum Request {
     - returns: SourceKit output as a dictionary.
     - throws: Request.Error on fail ()
     */
+    @available(*, deprecated, renamed: "send()")
     public func failableSend() throws -> [String: SourceKitRepresentable] {
-        initializeSourceKitFailable
-        let response = sourcekitd_send_request_sync(sourcekitObject)
-        defer { sourcekitd_response_dispose(response!) }
-        if sourcekitd_response_is_error(response!) {
-            let error = Request.Error(response: response!)
-            if case .connectionInterrupted = error {
-                _ = sourceKitWaitingRestoredSemaphore.wait(timeout: DispatchTime.now() + 10)
-            }
-            throw error
-        }
-        return fromSourceKit(sourcekitd_response_get_value(response!)) as! [String: SourceKitRepresentable]
+        return try send()
     }
 }
 
@@ -434,55 +435,72 @@ extension Request: CustomStringConvertible {
     public var description: String { return String(validatingUTF8: sourcekitd_request_description_copy(sourcekitObject)!)! }
 }
 
-private func interfaceForModule(_ module: String, compilerArguments: [String]) -> [String: SourceKitRepresentable] {
+private func interfaceForModule(_ module: String, compilerArguments: [String]) throws -> [String: SourceKitRepresentable] {
     var compilerargs = compilerArguments.map { sourcekitd_request_string_create($0) }
     let dict = [
-        sourcekitd_uid_get_from_cstr("key.request"): sourcekitd_request_uid_create(sourcekitd_uid_get_from_cstr("source.request.editor.open.interface")),
-        sourcekitd_uid_get_from_cstr("key.name"): sourcekitd_request_string_create(NSUUID().uuidString),
-        sourcekitd_uid_get_from_cstr("key.compilerargs"): sourcekitd_request_array_create(&compilerargs, compilerargs.count),
-        sourcekitd_uid_get_from_cstr("key.modulename"): sourcekitd_request_string_create("SourceKittenFramework.\(module)")
+        sourcekitd_uid_get_from_cstr("key.request")!: sourcekitd_request_uid_create(sourcekitd_uid_get_from_cstr("source.request.editor.open.interface")!),
+        sourcekitd_uid_get_from_cstr("key.name")!: sourcekitd_request_string_create(NSUUID().uuidString),
+        sourcekitd_uid_get_from_cstr("key.compilerargs")!: sourcekitd_request_array_create(&compilerargs, compilerargs.count),
+        sourcekitd_uid_get_from_cstr("key.modulename")!: sourcekitd_request_string_create("SourceKittenFramework.\(module)")
     ]
     var keys = Array(dict.keys.map({ $0 as sourcekitd_uid_t? }))
     var values = Array(dict.values)
-    return Request.customRequest(request: sourcekitd_request_dictionary_create(&keys, &values, dict.count)).send()
+    return try Request.customRequest(request: sourcekitd_request_dictionary_create(&keys, &values, dict.count)!).send()
 }
 
-internal func libraryWrapperForModule(_ module: String, loadPath: String, linuxPath: String?, spmModule: String, compilerArguments: [String]) -> String {
-    let sourceKitResponse = interfaceForModule(module, compilerArguments: compilerArguments)
+extension String {
+    private func nameFromFullFunctionName() -> String {
+        return String(self[..<range(of: "(")!.lowerBound])
+    }
+
+    fileprivate func extractFreeFunctions(inSubstructure substructure: [[String: SourceKitRepresentable]]) -> [String] {
+        return substructure.filter({
+            SwiftDeclarationKind(rawValue: SwiftDocKey.getKind($0)!) == .functionFree
+        }).flatMap { function -> String? in
+            let name = (function["key.name"] as! String).nameFromFullFunctionName()
+            let unsupportedFunctions = [
+                "clang_executeOnThread",
+                "sourcekitd_variant_dictionary_apply",
+                "sourcekitd_variant_array_apply"
+            ]
+            guard !unsupportedFunctions.contains(name) else {
+                return nil
+            }
+
+            let parameters = SwiftDocKey.getSubstructure(function)?.map { parameterStructure in
+                return (parameterStructure as! [String: SourceKitRepresentable])["key.typename"] as! String
+            } ?? []
+            var returnTypes = [String]()
+            if let offset = SwiftDocKey.getOffset(function), let length = SwiftDocKey.getLength(function) {
+                let start = index(startIndex, offsetBy: Int(offset))
+                let end = index(start, offsetBy: Int(length))
+#if swift(>=4.0)
+                let functionDeclaration = String(self[start..<end])
+#else
+                let functionDeclaration = self[start..<end]
+#endif
+                if let startOfReturnArrow = functionDeclaration.range(of: "->", options: .backwards)?.lowerBound {
+                    let adjustedDistance = distance(from: startIndex, to: startOfReturnArrow)
+                    let adjustedReturnTypeStartIndex = functionDeclaration.index(functionDeclaration.startIndex,
+                                                                                 offsetBy: adjustedDistance + 3)
+                    returnTypes.append(String(functionDeclaration[adjustedReturnTypeStartIndex...]))
+                }
+            }
+
+            let joinedParameters = parameters.map({ $0.replacingOccurrences(of: "!", with: "?") }).joined(separator: ", ")
+            let joinedReturnTypes = returnTypes.map({ $0.replacingOccurrences(of: "!", with: "?") }).joined(separator: ", ")
+            let lhs = "internal let \(name): @convention(c) (\(joinedParameters)) -> (\(joinedReturnTypes))"
+            let rhs = "library.load(symbol: \"\(name)\")"
+            return "\(lhs) = \(rhs)".replacingOccurrences(of: "SourceKittenFramework.", with: "")
+        }
+    }
+}
+
+internal func libraryWrapperForModule(_ module: String, loadPath: String, linuxPath: String?, spmModule: String, compilerArguments: [String]) throws -> String {
+    let sourceKitResponse = try interfaceForModule(module, compilerArguments: compilerArguments)
     let substructure = SwiftDocKey.getSubstructure(Structure(sourceKitResponse: sourceKitResponse).dictionary)!.map({ $0 as! [String: SourceKitRepresentable] })
     let source = sourceKitResponse["key.sourcetext"] as! String
-    let freeFunctions = substructure.filter({
-        SwiftDeclarationKind(rawValue: SwiftDocKey.getKind($0)!) == .functionFree
-    }).flatMap { function -> String? in
-        let fullFunctionName = function["key.name"] as! String
-        let name = fullFunctionName.substring(to: fullFunctionName.range(of: "(")!.lowerBound)
-        let unsupportedFunctions = [
-            "clang_executeOnThread",
-            "sourcekitd_variant_dictionary_apply",
-            "sourcekitd_variant_array_apply",
-        ]
-        guard !unsupportedFunctions.contains(name) else {
-            return nil
-        }
-
-        var parameters = [String]()
-        if let functionSubstructure = SwiftDocKey.getSubstructure(function) {
-            for parameterStructure in functionSubstructure {
-                parameters.append((parameterStructure as! [String: SourceKitRepresentable])["key.typename"] as! String)
-            }
-        }
-        var returnTypes = [String]()
-        if let offset = SwiftDocKey.getOffset(function), let length = SwiftDocKey.getLength(function) {
-            let start = source.index(source.startIndex, offsetBy: Int(offset))
-            let end = source.index(start, offsetBy: Int(length))
-            let functionDeclaration = source.substring(with: start..<end)
-            if let startOfReturnArrow = functionDeclaration.range(of: "->", options: .backwards)?.lowerBound {
-                returnTypes.append(functionDeclaration.substring(from: functionDeclaration.index(startOfReturnArrow, offsetBy: 3)))
-            }
-        }
-
-        return "internal let \(name): @convention(c) (\(parameters.map({ $0.replacingOccurrences(of: "!", with: "?") }).joined(separator: ", "))) -> (\(returnTypes.joined(separator: ", "))) = library.load(symbol: \"\(name)\")".replacingOccurrences(of: "SourceKittenFramework.", with: "")
-    }
+    let freeFunctions = source.extractFreeFunctions(inSubstructure: substructure)
     let spmImport = "#if SWIFT_PACKAGE\nimport \(spmModule)\n#endif\n"
     let library: String
     if let linuxPath = linuxPath {
@@ -505,51 +523,4 @@ internal func libraryWrapperForModule(_ module: String, loadPath: String, linuxP
         endPlatformCheck = "\n"
     }
     return startPlatformCheck + spmImport + library + freeFunctions.joined(separator: "\n") + endPlatformCheck
-}
-
-// MARK: - migration support
-extension Request {
-    @available(*, unavailable, renamed: "editorOpen(file:)")
-    public static func EditorOpen(_: File) -> Request { fatalError() }
-
-    @available(*, unavailable, renamed: "cursorInfo(file:offset:arguments:)")
-    public static func CursorInfo(file: String, offset: Int64, arguments: [String]) -> Request { fatalError() }
-
-    @available(*, unavailable, renamed: "customRequest(request:)")
-    public static func CustomRequest(_: sourcekitd_object_t) -> Request { fatalError() }
-
-    @available(*, unavailable, renamed: "codeCompletionRequest(file:contents:offset:arguments:)")
-    public static func CodeCompletionRequest(file: String, contents: String, offset: Int64, arguments: [String]) -> Request { fatalError() }
-
-    @available(*, unavailable, renamed: "interface(file:uuid:)")
-    public static func Interface(file: String, uuid: String) -> Request { fatalError() }
-
-    @available(*, unavailable, renamed: "findUSR(file:usr:)")
-    public static func FindUSR(file: String, usr: String) -> Request { fatalError() }
-
-    @available(*, unavailable, renamed: "index(file:arguments:)")
-    public static func Index(file: String, arguments: [String]) -> Request { fatalError() }
-
-    @available(*, unavailable, renamed: "format(file:line:useTabs:indentWith:)")
-    public static func Format(file: String, line: Int64, useTabs: Bool, indentWidth: Int64) -> Request { fatalError() }
-
-    @available(*, unavailable, renamed: "replaceText(file:offset:length:sourceText:)")
-    public static func ReplaceText(file: String, offset: Int64, length: Int64, sourceText: String) -> Request { fatalError() }
-}
-
-extension Request.Error {
-    @available(*, unavailable, renamed: "connectionInterrupted(_:)")
-    public static func ConnectionInterrupted(_: String?) -> Request.Error { fatalError() }
-
-    @available(*, unavailable, renamed: "invalid(_:)")
-    public static func Invalid(_: String?) -> Request.Error { fatalError() }
-
-    @available(*, unavailable, renamed: "failed(_:)")
-    public static func Failed(_: String?) -> Request.Error { fatalError() }
-
-    @available(*, unavailable, renamed: "cancelled(_:)")
-    public static func Cancelled(_: String?) -> Request.Error { fatalError() }
-
-    @available(*, unavailable, renamed: "unknown(_:)")
-    public static func Unknown(_: String?) -> Request.Error { fatalError() }
 }

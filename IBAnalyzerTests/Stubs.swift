@@ -32,7 +32,7 @@ struct StubNibParser: NibParserType {
     static let dMap = ["FirstViewController": Nib(outlets: [], actions: [StubNibParser.tappedButton]),
                        "SecondViewController": Nib(outlets: [StubNibParser.titleView], actions: [])]
 
-    func mappingForFile(at url: URL) throws -> [String : Nib] {
+    func mappingForFile(at url: URL) throws -> [String: Nib] {
         switch url {
         case URL(fileURLWithPath: "c.xib"):
             return type(of: self).cMap
@@ -61,7 +61,7 @@ struct StubSwiftParser: SwiftParserType {
         }
     }
 
-    func mappingForContents(_ contents: String, result: inout [String: Class]) {
+    func mappingForContents(_ contents: String, result: inout [String: Class]) throws {
         //do nothing
     }
 }

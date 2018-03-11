@@ -56,7 +56,7 @@ struct Declaration {
         let subString = file.contents.substring(with: range)
         let lines = subString.components(separatedBy: "\n")
 
-        if let column = lines.last?.characters.count {
+        if let column = lines.last?.count {
             return (line: lines.count, column: column)
         }
         return (line: lines.count, column: 0)
@@ -70,18 +70,18 @@ extension Declaration: Equatable {
 }
 
 enum ConnectionIssue: Issue {
-    case MissingOutlet(className: String, outlet: Declaration)
-    case MissingAction(className: String, action: Declaration)
-    case UnnecessaryOutlet(className: String, outlet: Declaration)
-    case UnnecessaryAction(className: String, action: Declaration)
+    case missingOutlet(className: String, outlet: Declaration)
+    case missingAction(className: String, action: Declaration)
+    case unnecessaryOutlet(className: String, outlet: Declaration)
+    case unnecessaryAction(className: String, action: Declaration)
 
     var description: String {
         switch self {
-        case let .MissingOutlet(className: className, outlet: outlet):
+        case let .missingOutlet(className: className, outlet: outlet):
             return "\(outlet.description): warning: IBOutlet missing: \(outlet.name) is not implemented in \(outlet.fileName(className: className))"
-        case let .MissingAction(className: className, action: action):
+        case let .missingAction(className: className, action: action):
             return "\(action.description): warning: IBAction missing: \(action.name) is not implemented in \(action.fileName(className: className))"
-        case let .UnnecessaryOutlet(className: className, outlet: outlet):
+        case let .unnecessaryOutlet(className: className, outlet: outlet):
             if Configuration.shared.isEnabled(.ignoreOptionalProperty) && outlet.isOptional {
                 return ""
             }
@@ -89,14 +89,14 @@ enum ConnectionIssue: Issue {
                 ", remove warning by adding '\(Rule.ignoreOptionalProperty.rawValue)' argument" :
                 ", consider set '\(outlet.name)' Optional"
             return "\(outlet.description): warning: IBOutlet unused: \(outlet.name) not linked in \(outlet.fileName(className: className))"+suggestion
-        case let .UnnecessaryAction(className: className, action: action):
+        case let .unnecessaryAction(className: className, action: action):
             return "\(action.description): warning: IBAction unused: \(action.name) not linked in \(action.fileName(className: className))"
         }
     }
 
     var isSeriousViolation: Bool {
         switch self {
-        case .MissingOutlet, .MissingAction:
+        case .missingOutlet, .missingAction:
             return true
         default:
             return false
@@ -150,7 +150,7 @@ struct ConnectionAnalyzer: Analyzer {
                 let matchOutlet: (Class) -> Bool = { $0.outlets.contains(outlet) }
 
                 if !classOrInheritedTypeOf(className: className, configuration: configuration, matches: matchOutlet) {
-                    result.append(.MissingOutlet(className: className, outlet: outlet))
+                    result.append(.missingOutlet(className: className, outlet: outlet))
                 }
             }
 
@@ -158,7 +158,7 @@ struct ConnectionAnalyzer: Analyzer {
                 let matchAction: (Class) -> Bool = { $0.actions.contains(action) }
 
                 if !classOrInheritedTypeOf(className: className, configuration: configuration, matches: matchAction) {
-                    result.append(.MissingAction(className: className, action: action))
+                    result.append(.missingAction(className: className, action: action))
                 }
             }
         }
@@ -182,13 +182,13 @@ struct ConnectionAnalyzer: Analyzer {
 
             for outlet in klass.outlets {
                 if !nib.outlets.contains(outlet) {
-                    result.append(ConnectionIssue.UnnecessaryOutlet(className: className, outlet: outlet))
+                    result.append(ConnectionIssue.unnecessaryOutlet(className: className, outlet: outlet))
                 }
             }
 
             for action in klass.actions {
                 if !nib.actions.contains(action) {
-                    result.append(ConnectionIssue.UnnecessaryAction(className: className, action: action))
+                    result.append(ConnectionIssue.unnecessaryAction(className: className, action: action))
                 }
             }
         }
