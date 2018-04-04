@@ -50,20 +50,20 @@ class SwiftParser: SwiftParserType {
                 kind == "source.lang.swift.decl.class" || kind == "source.lang.swift.decl.extension" {
 
                 for insideStructure in structure.substructure {
-                    if let attributes = insideStructure["key.attributes"] as? [[String: String]],
+                    if let attributes = insideStructure["key.attributes"] as? [[String: AnyObject]],
                         let propertyName = insideStructure["key.name"] as? String {
 
-                        let isOutlet = attributes.filter({ (dict) -> Bool in
-                            return dict.values.contains("source.decl.attribute.iboutlet")
-                        }).count > 0
+                        let isOutlet = attributes.contains { dict -> Bool in
+                            return dict.values.contains(where: { $0 as? String == "source.decl.attribute.iboutlet" })
+                        }
 
                         if isOutlet, let nameOffset64 = insideStructure["key.nameoffset"] as? Int64 {
                             outlets.append(Declaration(name: propertyName, file: file, offset: nameOffset64, isOptional: insideStructure.isOptional))
                         }
 
-                        let isIBAction = attributes.filter({ (dict) -> Bool in
-                            return dict.values.contains("source.decl.attribute.ibaction")
-                        }).count > 0
+                        let isIBAction = attributes.contains { dict -> Bool in
+                            return dict.values.contains(where: { $0 as? String == "source.decl.attribute.ibaction" })
+                        }
 
                         if isIBAction, let selectorName = insideStructure["key.selector_name"] as? String,
                             let nameOffset64 = insideStructure["key.nameoffset"] as? Int64 {
