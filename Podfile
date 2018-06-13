@@ -6,7 +6,7 @@ target 'IBAnalyzer' do
   use_frameworks!
 
   pod 'SourceKittenFramework', '~> 0.19'
-  pod 'SwiftLint', '~> 0.25'
+  pod 'SwiftLint', '~> 0.25.1'
   target 'IBAnalyzerTests' do
   end
 end
