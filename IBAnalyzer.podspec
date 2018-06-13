@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
   s.name         = "IBAnalyzer"
-  s.version      = "0.2.1"
+  s.version      = "0.3.0"
   s.summary      = "Tool for finding xib and storyboard-related issues at the build time."
 
   s.homepage     = "https://github.com/fastred/IBAnalyzer"
