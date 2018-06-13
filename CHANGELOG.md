@@ -2,6 +2,10 @@
 
 ---
 
+## 0.3.0
+
+- Swift 4.1 compatibility.
+
 ## 0.2.1
 
 - Improved README.
