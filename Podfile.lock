@@ -2,27 +2,20 @@ PODS:
   - SourceKittenFramework (0.19.1):
     - SWXMLHash (~> 4.1)
     - Yams (~> 0.5.0)
-  - SwiftLint (0.25.1)
+  - SwiftLint (0.25.0)
   - SWXMLHash (4.5.0)
   - Yams (0.5.0)
 
 DEPENDENCIES:
   - SourceKittenFramework (~> 0.19)
-  - SwiftLint (~> 0.25.1)
-
-SPEC REPOS:
-  https://github.com/cocoapods/specs.git:
-    - SourceKittenFramework
-    - SwiftLint
-    - SWXMLHash
-    - Yams
+  - SwiftLint (~> 0.25)
 
 SPEC CHECKSUMS:
   SourceKittenFramework: ef76be16e76ffa0a64b00c5eb053e87c6770dcdb
-  SwiftLint: ce933681be10c3266e82576dad676fa815a602e9
+  SwiftLint: e14651157288e9e01d6e1a71db7014fb5744a8ea
   SWXMLHash: 5d980b1f12ff0ee2bd9a26df1e01377dc91dfb6e
   Yams: 58b13424ca380835c4c797bc775ce6cbb3bc0167
 
-PODFILE CHECKSUM: e9eb876508bb57d7b03a4c6a6146c2eb1e0051a2
+PODFILE CHECKSUM: cf7b7b448cbccb71fcde1d6e415b6373b0de26c2
 
-COCOAPODS: 1.5.3
+COCOAPODS: 1.1.1

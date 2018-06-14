@@ -69,7 +69,6 @@ private class ParserDelegate: NSObject, XMLParserDelegate {
             let action = Declaration(name: selector, line: parser.lineNumber, column: parser.columnNumber, url: url)
             classNameToNibMap[customClassName]?.actions.append(action)
         case let tag where (inObjects && tag != "viewControllerPlaceholder"):
-//             swiftlint:disable identifier_name superfluous_disable_command
             let customClass = attributeDict["customClass"]
             let id = attributeDict["id"]
             stack.append(Element(tag: tag, customClassName: customClass))
@@ -78,7 +77,6 @@ private class ParserDelegate: NSObject, XMLParserDelegate {
                 idToCustomClassMap[id] = customClass
                 classNameToNibMap[customClass] = Nib(outlets: [], actions: [])
             }
-            // swiftlint:disable identifier_name superfluous_disable_command
         default:
             break
         }

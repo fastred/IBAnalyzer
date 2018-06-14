@@ -67,7 +67,7 @@ struct StubSwiftParser: SwiftParserType {
 }
 
 func += <K, V> (left: inout [K: V], right: [K: V]) {
-    for (key, value) in right {
-        left.updateValue(value, forKey: key)
+    for (k, v) in right {
+        left.updateValue(v, forKey: k)
     }
 }
